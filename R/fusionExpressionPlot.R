@@ -1,6 +1,20 @@
 # library(GenomicRanges);
 # library(RColorBrewer);
 
+#' Plot Expression Profiles for Fused Genes
+#'
+#' Plots exons from two genes as boxes scaled by exon size and colored based on
+#' expression in a sample. Fusion points between the two genes are represented
+#' as triangles at the appropriate position. This allows visualizing the drop in
+#' relative expression of the exons that are part of a putative expressed fusion
+#' transcript relative to the exons only in the unfused gene transcripts.
+#' Normalization is performed across an entire cohort of samples and then again
+#' within each gene, so color differences show exons whose expression is
+#' unusually variant within the genes against a background of similar samples.
+#'
+#' @docType package
+#' @name FusionExpressionPlot
+#'
 #' @import IRanges
 #' @import GenomicRanges
 #' @import RColorBrewer
