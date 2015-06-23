@@ -214,7 +214,7 @@ extractGeneModels <- function( gafFile,
 
    # Output line counts include 1 header line in all files.
    # Requires the "tools" library
-   library(tools);
+#   library(tools);
 
    # Using filename as a parameter in a system command so need to be careful.
    if (! all(is.safeFileName(c(gafFile, outFile)))) {
@@ -237,7 +237,7 @@ extractGeneModels <- function( gafFile,
    info = list();
    info$gaf = gafFile;
    info$gaf_real = normalizePath(gafFile);
-   info$gaf_md5 = md5sum(gafFile);
+   info$gaf_md5 = tools::md5sum(gafFile);
    info$uniqueGene = uniqueGene;
    info$skipUnknownGene = skipUnknownGene;
 
@@ -299,7 +299,7 @@ extractGeneModels <- function( gafFile,
 
    info$gaf_extract= outFile;
    info$gaf_extract_real= normalizePath(outFile);
-   info$gaf_extract_md5 = md5sum(outFile);
+   info$gaf_extract_md5 = tools::md5sum(outFile);
    return( info )
 }
 
