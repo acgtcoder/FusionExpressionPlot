@@ -1,5 +1,10 @@
-library(GenomicRanges);
-library(RColorBrewer);
+# library(GenomicRanges);
+# library(RColorBrewer);
+
+#' @import IRanges
+#' @import GenomicRanges
+#' @import RColorBrewer
+NULL
 
 DEBUG <- 1;
 
@@ -126,6 +131,8 @@ grColorMap <- function(
 
 # Get a list of GRange objects by gene for a column of sample data
 # extracted from a data frame with gene + exon rows and sample columns.
+
+#' @export
 grFromCohortDf <- function( df, genes, sample, column='exonData' ) {
    ###
    #     Given a dataframe describing exon expression (for all samples in the

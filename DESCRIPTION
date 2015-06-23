@@ -26,6 +26,7 @@ License: GPL-3
 LazyData: TRUE
 Imports:
     tools,
+    IRanges,
     GenomicRanges,
     RColorBrewer
 Suggests: knitr
