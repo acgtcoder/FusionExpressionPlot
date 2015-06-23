@@ -9,50 +9,182 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+Set up to run
+=============
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+1. Make working directory and work there
 
-## Vignette Info
+        mkdir /home/srj/Projects/Fusions/Pcpg/FusionExpression
+        cd /home/srj/Projects/Fusions/Pcpg/FusionExpression
+        
+1. Getting list of quantification files:
 
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+        psql -U seqware -h swprod.bioinf.unc.edu seqware_meta_db --field-separator $'\t' --no-align --tuples-only --command "select v.sample, v.file_path from vw_files v, upload u where u.sample_id = v.sample_id and v.sample_type = 'PCPG' and v.algorithm = 'bt_exon_quantification' and (u.target='CGHUB' or u.target='CGHUB_BAM') and u.external_status = 'live' and (u.status != 'skip')" -o exonQuantFileList.txt
+        
+1. Verify no sample listed twice by comparing:
 
-## Styles
+        cut -f 1 exonQuantFileList.txt | sort | uniq | wc -l
+        wc -l exonQuantFileList.txt
 
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+1. Copy R code files
 
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
+        cp /home/srj/Projects/Fusions/src/ExonExpressionPlots_0.1/*.R .
+        
+1. Get list of samples in cohort
 
-## Figures
+        cut -f 1 exonQuantFileList.txt > sampleList.txt
 
-The figure sizes have been customised so that you can easily put two images side-by-side. 
+1. Add heading to exonQuantFileList.txt
 
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
-```
+        vi exonQuantFileList.txt
+            1G
+        i
+        samples	exon_expression_files
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+        :wq
+        
+1. Create list of genes to plot (genesList.txt) with one gene per line
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+1. Get Mapsplice cohort fusion list and save locally
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+Get gene model
+==============
 
-## More Examples
+1. Link to gaf file
 
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+        ln -s /datastore/tier1data/nextgenseq/seqware-analysis/GAF/TCGA.hg19.June2011.gaf TCGA.hg19.June2011.gaf
+        
+1. In R with this as the working directory
 
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
-```
+    1. Set up names for input, output, and internal files
+    
+            gafFile <- "TCGA.hg19.June2011.gaf"
+            gafGeneModelsFile <- "TCGA.hg19.June2011.gaf.geneModels.txt"
+            geneModels.Rdata <- "geneModels.RData"
+            
+    1.Load code to process the gaf
+    
+            source( "gafGeneModels.R" )
+            
+    1. Extract gene models from the gaf (takes a few seconds)
+    
+            gafGeneModelStats <- extractGeneModels( gafFile, outFile=gafGeneModelsFile )
+            print(gafGeneModelStats)
+                $gaf
+                [1] "TCGA.hg19.June2011.gaf"
+                
+                $gaf_real
+                [1] "/datastore/tier1data/nextgenseq/seqware-analysis/GAF/TCGA.hg19.June2011.gaf"
+                
+                $gaf_md5
+                            TCGA.hg19.June2011.gaf
+                "b9e0c2b81736d82d62bb6ab8cc517644"
+                
+                $uniqueGene
+                [1] TRUE
+                
+                $skipUnknownGene
+                [1] TRUE
+                
+                $gaf_lines
+                [1] 3483704
+                
+                $gaf_models
+                [1] 20764
+                
+                $gaf_models_unique
+                [1] 20502
+                
+                $gaf_extract
+                [1] "TCGA.hg19.June2011.gaf.geneModels.txt"
+                
+                $gaf_extract_real
+                [1] "/home/srj/Projects/Fusions/Pcpg/FusionExpression/TCGA.hg19.June2011.gaf.geneModels.txt"
+                
+                $gaf_extract_md5
+                TCGA.hg19.June2011.gaf.geneModels.txt
+                   "4e048d450089ee2309dd16c6ce19b898"
+                   
+      . Generate the data file of gene models (takes a few seconds)
 
-Also a quote using `>`:
+            geneModels <- loadGeneModels( gafGeneModelsFile )
+            save( geneModels, file=geneModels.Rdata )
+            
+Generate cohort expression data frame
+=====================================
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+1. Setup parameters for running
+    
+        expressionColumn <- "rpkm"
+        geneModels.Rdata <- "geneModels.RData"
+        cohortSamplesFile <- "sampleList.txt"
+        sampleExpressionFileMap <- "exonQuantFileList.txt"
+        cohortExpression.RData <- "cohortExpression.RData"
+        
+1. Load code to process the expression files
+
+        source("cohortNormalizedExpression.R")
+        
+1. Load the gene model data prepared above
+
+        load( geneModels.Rdata )
+
+1. Set up the data formats used for processing gene expression files
+
+        cohortSamples <- getSampleCohort( cohortSamplesFile )
+            Read 184 items
+        sampleExpressionFiles <- getCohortFiles( sampleExpressionFileMap, cohortSamples )
+        
+1. Load data from all cohort expression files, takes about 5 seconds per file
+
+    cohortExpression <- getCohortExonExpressionData( geneModels, sampleExpressionFiles, type=expressionColumn )
+            [1] "1 of 184. Adding exon expression data for TCGA-P7-A5NY-01A-12R-A35K-07"
+            [1] "2 of 184. Adding exon expression data for TCGA-QR-A6H4-01A-11R-A35K-07"
+            ...
+            [1] "183 of 184. Adding exon expression data for TCGA-WB-A81K-01A-11R-A35L-07"
+            [1] "184 of 184. Adding exon expression data for TCGA-S7-A7X0-01A-12R-A35L-07"
+    save( cohortExpression, file=cohortExpression.RData )
+        
+Normalize
+=========
+
+1. Set up for normalization
+
+        cohortExpression.RData <- "cohortExpression.RData"
+        normalizedCohortExpression.RData <- "normalizedCohortExpression.RData"
+
+1. Do normalization (Takes a couple of seconds per sample)
+
+        normalizedCohortExpression <- normExpressionData( cohortExpression )
+        save( normalizedCohortExpression, file=normalizedCohortExpression.RData )
+
+Get Fusions to plot
+===================
+
+    fusionFile <- "pcpg_185_2014-05-18.merged.fusion_gene_profiles.txt"
+    cohortSamplesFile <- "sampleList.txt"
+    genesOfInterestFile <- "genesList.txt"
+    fusionData.RData <- "fusionData.RData"
+    selectedFusions.RData <- "selectedFusions.RData"
+    source("cohortFusions.R")
+    source("cohortNormalizedExpression.R")
+    fusionData <- getMapSpliceCohortFusionData( fusionFile );
+    save( fusionData, file=fusionData.RData )
+    cohortSamples <- getSampleCohort( cohortSamplesFile )
+        Read 184 items
+    genesOfInterest <- getSampleCohort( genesOfInterestFile )
+        Read 3 items
+    selectedFusions <- filterFusions( fusionData, sample=cohortSamples, gene1=genesOfInterest, gene2=genesOfInterest );
+    save( selectedFusions, file=selectedFusions.RData )
+
+Make plots
+==========
+
+    selectedFusions.RData <- "selectedFusions.RData"
+    normalizedCohortExpression.RData <- "normalizedCohortExpression.RData"
+    source("cohortFusions.R")
+    source("fusionExpressionPlot.R")
+    load( selectedFusions.RData )
+    load( normalizedCohortExpression.RData )
+    do.allPlots( selectedFusions, normalizedCohortExpression)
+
