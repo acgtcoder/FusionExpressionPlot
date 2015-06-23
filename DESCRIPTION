@@ -3,7 +3,7 @@ Type: Package
 Title: Plot Expression Profiles for Fused Genes
 Version: 0.1
 Date: 2015-06-22
-Authors@R: 
+Authors@R:
    c(
       person( "Stuart R", "Jefferys",
               email= "srjefferys@gmail.com",
@@ -24,5 +24,8 @@ Description: Plots exons from two genes as boxes scaled by exon size and
    of similar samples.
 License: GPL-3
 LazyData: TRUE
+Imports:
+    GenomicRanges,
+    RColorBrewer
 Suggests: knitr
 VignetteBuilder: knitr
