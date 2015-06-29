@@ -9,32 +9,348 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+Notes on identifiers
+--------------------
+
+Chromosome names
+
+:   Chromosomes are named with a prefixed "chr" and then the chromosome number
+    or letter. Chromosome with number names (1..22) are specified as 1 or 2
+    digits with no leading 0. Chromosomes with letter names are specified with a
+    capitalized letter (M, X, or Y). The exception is the mitichondiral
+    chromosome, which may be labeled chrM_rCRS instead of chrM due to issues 
+    with the promolgated genome. There should never be mixed names for the
+    mitochondrial chromosome in the same file; it should be one or the other.
+    Case matters, CHRx, chrx, and ChrX are invalid names.
+
+        chr1, chr2, chr10, chr22, chrM/chrM_rCRS, chrX, chrY
+
+    Where sorting matters, the order is as given above. chr10 comes just after
+    chr9, and chrM comes just after chr22. Note that this requires special
+    handling to sort correctly. Neither normal alphabetic nor numeric sorting
+    will work correctly.
+
+Feature locations
+
+:   Features are specified by a location on the genome. This location is
+    usually given as a range of positions on one of the two strands of a
+    chromosome.  The positions are specified as if the feature was on the +
+    (5' to 3') strand, where the first base of the chromosome starts at 1 and
+    the given positions represent the first and last base of the feature
+    (inclusively). Features on the - (3' to 5' strand) actually run in the
+    reverse direction, so the given first position is really the last base of
+    the feature and the given last position is actually the first base of the
+    feature.
+    
+    Strands may be specified as +, -, *, or left unspecified. A * means the
+    strand unknown. If no strand is specified, a feature is assumed to be either
+    on the + strand or unknwon, as required by the context. If a sequence of
+    bases is explicitly given, this is usually the sequence on the + strand. For
+    features on the - strand, the sequence of that feature is the reverse
+    complement of the specified sequence, unless explicitly stated otherwise.
+
+Fusion locations
+
+:   Fusion locations are specified as if both ends occured on the plus strand,
+    with the first position being the last base of the low end of the fusion
+    and the second position the first base of the high end of the fusion. If
+    fusion ends are on different chromsosomes, the low end of the fusion is
+    the lower sorting chromosme, as described under chromosome names, above.
+    Strandedness is currently ignored by this package.
+    [TODO: Allow stranded data.]
+    
+    Fusion junctions provide a weak kind of strandedness information, even when
+    no strandedness was present in the sequencing. Reads spanning the junction
+    will either map in the same direction on both sides of the fusion (either
+    +/+ or -/-), or they will map in different directions on both sides
+    (either +/- or -/+). Junctions are actuality in one of these 4 possible
+    states, but only 2 states, same or different, can be determinined in the
+    absence of strandedness information. Strandedness is represented as +/+ or
+    +/- respectively. This pseudo-strandedness is currently ignored by this
+    package. [TODO: Allow for pseudo-stranded data.]
+    
+    Fusion junctions in RNASeq data usually occur at exon boundaries as a result
+    of fusion points occuring in introns or creating new splicing patterns.
+    This means that fusions have a directionality given the assumed role of the
+    bases at the fusion ends in splicing, with a "donor" and an "acceptor" side.
+    For fusion points within an "exon", this directionality is not meaningful
+    as any base may be on either side of the fusion point in the processed
+    transcript, but it is not possible to tell from the RNASeq data alone when
+    this has occured. This is represented as A/D or D/A. This orientation is
+    currently ignored by this package. [TODO: Allow for oriented fusions.]
+
+Sample names
+
+:   Sample names are potentially used in file or directory names, and hence
+    should be limited to only letters, digits, periods, underscores, and
+    hyphens. Sample names should be unique within any cohort or project, and
+    although matched case sensitively, names should be unique when considered
+    in a case-insensitive way to prevent collisions on case-insensitive file
+    systems.
+
+Column headings
+
+:   To allow for future additions to data files, column headings are used to 
+    identify which column contains data needed. Other columns will be ignored,
+    but the ignored column headings must be parseable. To maximum portability,
+    all column headings, even those ignored, should be assumed to be case
+    sensitive but should be unique within a file when considered case
+    insensitively. Anything characters other than letters, digits, periods,
+    underscores, and hyphens should be avoided in column header names -
+    especially spaces. Tabs and returns are not allowed under any circumstances
+    as these are file delimiters.
+  
+File names
+
+:   File names should in general be full path file names, be considered to be 
+    matched case-sensitively, should be unique if considered case insensitively,
+    and should contain only letters, digits, periods, underscores, and hyphens.
+    If a file name is a link or shortcut, it should be followed transparently,
+    so if  there are problematic file names, create links to them and use the
+    full-path to the link.
+
+Gene, transcript and exon names
+
+:   All gene, transcript, and exon names are taken from the genome annotation
+    file (gaf). There are multiple versions of the gaf, this package uses v2.1.
+
+Required input data
+===================
+
+Overview
+--------
+
+The following data files are needed by this package. Each is described in more
+detail in the following section,
+
+This package was initially designed to run as part of a batch processing
+pipeline. Inputs are based on files rather than variables. [TODO - allow input
+from vectors, lists, or data-frames in addition to file input.]
+
+Gaf 2.1 (TCGA.hg19.June2011.gaf)
+
+:   The gene annotation file (gaf) reference used with the TCGA RNASeq data as
+    uploaded by UNC. Contains descriptions including names and location models
+    for all the genes, transcipts, exons and more. Used as a reference for the
+    exons described in the Exon expression files and to associate gene or
+    transcript names exon models.
+
+Exon expression files (bt.exon_quantification.txt)
+  
+:   This file describes RNA expression for one sample on a per-exon basis. It is
+    normally downloaded from the TCGA website and is publically available after a
+    short embargo period. It is usally called bt.exon_quantification.txt, with the
+    directory it is in specifying the sample this file is associated with.
+  
+Cohort definition file
+
+:   This file lists all samples in the cohort and the path to the exon expression
+    file associated with it.
+  
+Fusion file
+
+:   This file lists the fusions in the cohort, by sample. Each line represents a 
+    fusion between two positions in the genome in a sample, as indicated by the 
+    most probable alignment of one or more RNASeq reads. Fusions as they appear in
+    RNASeq data do not differ much from a long range splice event, except it can 
+    involve different chromosomes.
+  
+    Each fusion end may match to multiple partners, and each such fusion event is 
+    indicated on a separate line. Multiple RNA fusion parnters may or may not 
+    indicate multiple fusion events. This can be due to heterogeneity in the
+    underlying DNA fusion events in the source sample, but can also be the result
+    of alternate splicing of transcripts whose unprocessed sequence spans a
+    particular DNA fusion.
+
+Gene annotation file V2.1 (gaf)
+-------------------------------
+
+This package only works with version 2 of the gaf, specifically the hg19 version
+from June 2011.  This annotation data was used by UNC-LCCC to generate the
+TCGA RNASeq expression results (V2 - genome alignment based).  No dbSNP
+information is used, so the smaller version of the gaf that does not
+include the SNP annotations is faster to extract. It can be downloaded from
+the NCI [here](http://bitly.com/1IbcrAs "This link is condensed via bitly
+as it is too long. The raw link is https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/outputs/"). You probably want TCGA.hg19.June2011.gaf.gz. The description
+of this file is unfortunately only included with version 2.0 of the gaf,
+[here](https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF_bundle_Feb2011/docs/). GAF_hg19_Feb2011.docx describes how the gaf was put together and
+what the conventions are. GAF_v2_file_description.docx describes the columns.
+The changes relative to version 2.0 are described [here](https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/docs/README.changes_in_v2.1.txt).
+
+
+Exon expression files
+---------------------
+
+The exon expression file format is one sample per file, one exon per line, no
+heading. Each line is a tab-delimited description in 4 columns of the expression
+for one (non-overlapping) exon from the sample. Exons are pre-defined by the
+gaf.
+
+column 1 - exon id
+
+:   Each line is a different exon identified by a formated string giving the
+    genomic coordinates of the exon, formated like
+
+        <chr#>:<start>-<end>:<strand>
+        
+        <chr#>   - The chromosome name
+        <start>  - The lowest genomic position of the exon.
+        <end>    - The highest genomic position of the exon.
+        <strand> - The orientation of the exon; the strand it is from.
+        
+column 2 - count
+
+:   The number of reads whose alignment overlaps this exon.
+
+column 3 - percent coverage.
+
+:   The fraction of bases in the exon covered by aligned reads.
+
+column 4 - RPKM.
+
+:   RPKM = (count) * 1e9 / ((total reads) * (exon length)) where total reads
+    are the number of aligned reads in this sample. Total reads can be calculated
+    from any given line by reversing this equation for a given RPKM; it is
+    constant within a file.
+
+An example file looks like:
+
+        chr1:11874-12227:+	0  0.0000000	0
+        chr1:12595-12721:+	2	0.3809524	0.185006777804708
+        chr1:12613-12721:+	2	0.2777778	0.215558355790806
+        chr1:12646-12697:+	0	0.0000000	0
+        chr1:13221-14409:+	31	0.1843434	0.306295914304935
+        chr1:13403-14409:+	30	0.2127237	0.349987995747734
+        chr1:14363-16765:-	3039	0.9929225	14.8572453004703
+        ...
+        chrM_rCRS:12337-14644:+	740004	1.0000000	3766.68781662252
+        chrM_rCRS:14761-15887:+	705755	1.0000000	7356.84171501079
+        chrM_rCRS:15998-16182:+	7884	1.0000000	500.652341618822
+        chrM_rCRS:16183-16569:+	7809	1.0000000	237.053200052163
+
+Calculating total reads from chr1:12595-12721:+ looks like:
+
+        (count * 1E9) / ( RPKM             *  (exon_length)     ) =
+        ( 2    * 1E9) / (0.185006777804708 * (1 + 12721 - 12595)) =
+        85121376 = total reads
+
+Calculating RPKM for chr1:14363-16765:- looks like:
+
+        (count) * 1e9 / ((total reads) *  (exon length)     ) =
+         3039   * 1e9 / (  85,121,376  * (1 + 16765 - 14363)) =
+         14.8572453004703... = RPKM
+         
+Note that being on the forward or reverse strand has no impact on values or
+calculations.
+
+Public TCGA data is packaged by cancer type and then within that disease by
+a hierarchy describing the analysis platform. The details of this organization
+is somewhat obscure, it is described [TODO][here]. The root for this public data is
+
+https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/tumor/
+
+One subdirectory for each disease type is provided, and then within that
+directory, the path to the RNASeq expression data will look like
+
+* Illumina HiSeq data: ./cgcc/unc.edu/illuminahiseq_rnaseqv2/rnaseqv2/
+* Illumina GA data: ./cgcc/unc.edu/illuminaga_rnaseqv2/rnaseqv2/
+    
+Within this directory are multiple versions of the cohort, the most recent one
+will be the most complete.
+
+Note: for some cancer types, older RNAseq analysis platforms are also available.
+This data has been superceeded by the platform described above. For some cancer
+types, total RNASeq expression data is available. Total RNASeq still tries to
+filter out ribosomal RNA but includes non-polyA-tailed RNA. For a few cancer
+types, additional or independent RNASeq data will be under different providers
+(not unc.edu)
+
+The cohort definition file
+--------------------------
+This cohort definition file format is one cohort per file, one sample per line, 
+with a header describing the columns. Lines and headers are tab delimited and 
+terminated by newlines. At least one column (normally the first) must be
+"sample", and for use in this package, one columnd must be
+"exon_expression_file". Other columns are ignored.
+
+sample
+
+:   Normally the first column, this column gives the sample name, and will be used
+as a key and possibly a file or directory name. Therefore the strings in this
+column should be unique when considered case in-sensitively and consist of
+only letters, numbers, periods, underscores, and hyphens.
+
+exon_expression_file
+
+:   The path to the exon expression file associated with this sample. Generally
+this is the full path. [TODO: test local paths] URLs are not supported.
+[TODO: support urls]
+
+   An example file looks like:
+
+        TCGA-QR-A6H4-01A-11R-A35K-07    /extData/expression/140205_UNC12-SN629_0347_AC38LPACXX_7_TGACCA/bt.exon_quantification.txt
+        TCGA-QR-A705-01A-11R-A35K-07    /extData/expression/140205_UNC12-SN629_0347_AC38LPACXX_7_GAGTGG/bt.exon_quantification.txt
+
+The fusion data file
+--------------------
+
+The fusion data file contains all RNASeq derived fusions for a sample cohort, 
+with one fusion per line and a header line describing the columns. Lines and
+headers are tab delimited and terminated by newlines. The following columns
+must be provided. Other columns are ignored.
+
+sample
+
+:   The sample name. Must match the sample name from the cohort definition
+file exactly (case sensitive).
+ 
+fusion
+
+:   The fusion, formatted like:
+ 
+        <chrLow#>:<posLow><strandLow>~<chrHigh#>:<posHigh><strandHigh>
+
+        <chrLow#> - The chromosome name chr1 to chr22, chrX, chrY, or chrM_rCRS
+        <pos> - The last base of, + strand coordinates.
+        <end> - The highest genomic position of the exon, + strand coordinates.
+        <strand> - The orientation of the exon; the strand it is from (+ or -).
+
 Set up to run
 =============
 
-1. Make working directory and work there
+(1) Make working directory and work there.
 
         mkdir /home/srj/Projects/Fusions/Pcpg/FusionExpression
         cd /home/srj/Projects/Fusions/Pcpg/FusionExpression
         
-1. Getting list of quantification files:
+(2) Getting list of quantification files:
 
-        psql -U seqware -h swprod.bioinf.unc.edu seqware_meta_db --field-separator $'\t' --no-align --tuples-only --command "select v.sample, v.file_path from vw_files v, upload u where u.sample_id = v.sample_id and v.sample_type = 'PCPG' and v.algorithm = 'bt_exon_quantification' and (u.target='CGHUB' or u.target='CGHUB_BAM') and u.external_status = 'live' and (u.status != 'skip')" -o exonQuantFileList.txt
+        psql -U seqware -h swprod.bioinf.unc.edu seqware_meta_db \
+             --field-separator $'\t' --no-align --tuples-only
+             --command \ "select v.sample, v.file_path \
+                  from vw_files v, upload u \
+                  where u.sample_id = v.sample_id and \
+                      v.sample_type = 'PCPG' and \
+                      v.algorithm = 'bt_exon_quantification' and \
+                      (u.target='CGHUB' or u.target='CGHUB_BAM') and \
+                      u.external_status = 'live' \
+                      and (u.status != 'skip')" \
+              -o exonQuantFileList.txt
         
-1. Verify no sample listed twice by comparing:
+(3) Verify no sample listed twice by comparing:
 
         cut -f 1 exonQuantFileList.txt | sort | uniq | wc -l
         wc -l exonQuantFileList.txt
 
-1. Copy R code files
+(4) Copy R code files
 
         cp /home/srj/Projects/Fusions/src/ExonExpressionPlots_0.1/*.R .
         
-1. Get list of samples in cohort
+(5) Get list of samples in cohort
 
         cut -f 1 exonQuantFileList.txt > sampleList.txt
 
-1. Add heading to exonQuantFileList.txt
+(6) Add heading to exonQuantFileList.txt
 
         vi exonQuantFileList.txt
             1G
@@ -43,9 +359,9 @@ Set up to run
 
         :wq
         
-1. Create list of genes to plot (genesList.txt) with one gene per line
+(7) Create list of genes to plot (genesList.txt) with one gene per line
 
-1. Get Mapsplice cohort fusion list and save locally
+(8) Get Mapsplice cohort fusion list and save locally
 
 Get gene model
 ==============
@@ -54,7 +370,7 @@ Get gene model
 
         ln -s /datastore/tier1data/nextgenseq/seqware-analysis/GAF/TCGA.hg19.June2011.gaf TCGA.hg19.June2011.gaf
         
-1. In R with this as the working directory
+2. In R with this as the working directory
 
     1. Set up names for input, output, and internal files
     
@@ -62,11 +378,11 @@ Get gene model
             gafGeneModelsFile <- "TCGA.hg19.June2011.gaf.geneModels.txt"
             geneModels.Rdata <- "geneModels.RData"
             
-    1.Load code to process the gaf
+    2. Load code to process the gaf
     
             source( "gafGeneModels.R" )
             
-    1. Extract gene models from the gaf (takes a few seconds)
+    3. Extract gene models from the gaf (takes a few seconds)
     
             gafGeneModelStats <- extractGeneModels( gafFile, outFile=gafGeneModelsFile )
             print(gafGeneModelStats)
@@ -121,21 +437,21 @@ Generate cohort expression data frame
         sampleExpressionFileMap <- "exonQuantFileList.txt"
         cohortExpression.RData <- "cohortExpression.RData"
         
-1. Load code to process the expression files
+2. Load code to process the expression files
 
         source("cohortNormalizedExpression.R")
         
-1. Load the gene model data prepared above
+3. Load the gene model data prepared above
 
         load( geneModels.Rdata )
 
-1. Set up the data formats used for processing gene expression files
+4. Set up the data formats used for processing gene expression files
 
         cohortSamples <- getSampleCohort( cohortSamplesFile )
             Read 184 items
         sampleExpressionFiles <- getCohortFiles( sampleExpressionFileMap, cohortSamples )
         
-1. Load data from all cohort expression files, takes about 5 seconds per file
+5. Load data from all cohort expression files, takes about 5 seconds per file
 
     cohortExpression <- getCohortExonExpressionData( geneModels, sampleExpressionFiles, type=expressionColumn )
             [1] "1 of 184. Adding exon expression data for TCGA-P7-A5NY-01A-12R-A35K-07"
@@ -153,7 +469,7 @@ Normalize
         cohortExpression.RData <- "cohortExpression.RData"
         normalizedCohortExpression.RData <- "normalizedCohortExpression.RData"
 
-1. Do normalization (Takes a couple of seconds per sample)
+2. Do normalization (Takes a couple of seconds per sample)
 
         normalizedCohortExpression <- normExpressionData( cohortExpression )
         save( normalizedCohortExpression, file=normalizedCohortExpression.RData )
