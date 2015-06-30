@@ -154,77 +154,80 @@ test.is.safeFileName <- function() {
    return( TRUE );
 }
 
-# Given a gaf file, extract a tab-delimited file with just the gene model data.
+#' Extract gene models from the gaf
+#'
+#' This extracts a tab delimited file of all canonical
+#' exon gene models from the GAF. The cannonical model is intended to
+#' be at least a common starting point for a simplified definition of "the gene
+#' called X", based on the union of all transcript. By default each model in the
+#' output file (row) can be refereed to uniquely by gene name.
+
+#' This requires the "grep" program, so only works on linux/mac systems. The Gaf
+#' file version this works with is the version used for the TCGA RNAseq
+#' expression data files. It is available for download at the NCI uncompressed:
+#' \href{https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/outputs/TCGA.hg19.June2011.gaf}{TCGA.hg19.June2011.gaf}
+#' or gzipped:
+#' \href{https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/outputs/TCGA.hg19.June2011.gaf.gz}{TCGA.hg19.June2011.gaf.gz}
+#'
+#' @export
+#' @param gafFile The full-path name of the GAF file [REQ]
+#' @param outFile The output file name, by default the same as the
+#'    gafFile, with ".geneModels" appended. Will not overwrite unless force= is
+#'    set true
+#' @param force If the output file exists, overwrite (generates
+#'   a warning).
+#' @param uniqueGene The gaf file contains several versions of
+#' some genes, these are annotated as  "1ofN", "2ofN", etc. By default, keeps
+#' only the "...1of" variant. Also, SLC35E2 is present twice, but without a
+#' numbered annotation. Keeps only the the larger (encompasing) version of
+#' SLC35E2. Set false to keep all versions of all genes (gene name will not
+#' then be a unique key.). Also implies skipUnknownGene
+#' @param skipUnknownGene Drops unknown genes, those whose names
+#' in the gaf are "?". There are 32 in the version of the GAF this targets.
+#' Set false to keep the unknown genes. Note, this setting is over-ridden to
+#' TRUE (skipping these genes) when uniqueGene= TRUE as all these genes have
+#' the same gene name, "?".
+#'
+#' @return The main output is the gaf extract file, which is just the
+#' gene models and by default just the genes with unique names. See
+#' \href{https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF_bundle_Feb2011/docs/GAF_v2_file_description.docx}{GAF_v2_file_description.docx}
+#' However, this function also returns a list with some summary info about the
+#' gaf and the generated geneModels file:
+#'
+#'     info$gaf - The gaf file name used as a parameter (relative file name)
+#'     info$gaf_real - The absolute full path filename to the input gaf file
+#'     info$gaf_md5 - The md5 checksum of the gaf file, as a string
+#'     info$uniqueGene - The uniqueGene parameter setting used.
+#'     info$skipUnknownGene - The skipUnknownGene parameter setting used.
+#'     info$gaf_lines - The number of lines in the gaf file
+#'     info$gaf_models - The number of models in the gaf file
+#'     info$gaf_models_unique - The number of unique models in the gaf file
+#'     info$gaf_extract - The geneModels file name, based on the input gaf
+#'     info$gaf_extract_real - The absolute full path filename of the geneModels file
+#'     info$gaf_extract_md5 - The md5 checksum of the geneModels file, as a # string
 extractGeneModels <- function( gafFile,
                                outFile= paste0(gafFile, ".geneModels"), force=FALSE,
                                uniqueGene= TRUE, skipUnknownGene= TRUE
 ) {
-   ###
-   #      Given the gaf file, this will create a tab delimited file of all
-   # canonical exon gene models as specified in the GAF. The cannonical model
-   # is intended to be at least a common starting point for a simplified
-   # definition of "the gene called X", based on the union of all transcript.
-   # By default each model in the output file (row) can be refereed to uniquely
-   # by gene name.
-   #      Requires the "grep" program, so only works on linux/mac systems. The
-   # Gaf file version this works with is the version used for the TCGA RNAseq
-   # expression data files, and can be downloaded from:
-   # https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/outputs/TCGA.hg19.June2011.gaf
-   # or a gzipped version from
-   # https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/outputs/TCGA.hg19.June2011.gaf.gz
-   ###
-   #     PARAM: gafFile - The full-path name of the GAF file [REQ]
-   #     PARAM: outFile= * - The output file name, by default the same as the
-   # gafFile, with ".geneModels" appended. Will not overwrite unless force= is
-   # set true
-   #     PARAM: force= FALSE - If the output file exists, overwrite (generates
-   # a warning).
-   #     PARAM: uniqueGene= TRUE - The gaf file contains several versions of
-   # some genes, these are annotated as  "1ofN", "2ofN", etc. By default, keeps
-   # only the "...1of" variant. Also, SLC35E2 is present twice, but without a
-   # numbered annotation. Keeps only the the larger (encompasing) version of
-   # SLC35E2. Set false to keep all versions of all genes (gene name will not
-   # then be a unique key.). Also implies skipUnknownGene
-   #     PARAM: skipUnknownGene= TRUE - Drops unknown genes, those whose names
-   # in the gaf are "?". There are 32 in the version of the GAF this targets.
-   # Set false to keep the unknown genes. Note, this setting is over-ridden to
-   # TRUE (skipping these genes) when uniqueGene= TRUE as all these genes have
-   # the same gene name, "?".
-   ###
-   #     RETURNS: The main output is the gaf extract file, which is just the
-   # gene models and by default just the genes with unique names. See
-   # https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF_bundle_Feb2011/docs/GAF_v2_file_description.docx
-   #     However, this function also returns a list with some summary info about
-   # the gaf and the generated geneModels file:
-   #     info$gaf - The gaf file name used as a parameter (relative file name)
-   #     info$gaf_real - The absolute full path filename to the input gaf file
-   #     info$gaf_md5 - The md5 checksum of the gaf file, as a string
-   #     info$uniqueGene - The uniqueGene parameter setting used.
-   #     info$skipUnknownGene - The skipUnknownGene parameter setting used.
-   #     info$gaf_lines - The number of lines in the gaf file
-   #     info$gaf_models - The number of models in the gaf file
-   #     info$gaf_models_unique - The number of unique models in the gaf file
-   #     info$gaf_extract - The geneModels file name, based on the input gaf
-   #     info$gaf_extract_real - The absolute full path filename of the
-   # geneModels file
-   #     info$gaf_extract_md5 - The md5 checksum of the geneModels file, as a
-   # string
-   ###
 
 
    # Output line counts include 1 header line in all files.
-   # Requires the "tools" library
-#   library(tools);
 
    # Using filename as a parameter in a system command so need to be careful.
-   if (! all(is.safeFileName(c(gafFile, outFile)))) {
-      stop( "Unsafe character in file name" );
+   if (! is.safeFileName( gafFile )) {
+      stop( "Unsafe character in gaf file name!" );
+   }
+   if (! file.exists(gafFile)) {
+      stop( 'Can\'t find the specified gaf file: \'', gafFile, '\'')
+   }
+   if (! is.safeFileName( outFile )) {
+      stop( "Unsafe character in output geneModel file name!" );
    }
    if (file.exists(outFile)) {
       if (! force) {
-         stop( "Output file already exists; use force=TRUE to overwrite: ", outFile)
+         stop( "Output file already exists; use force=TRUE to overwrite: '", outFile, "'")
       } else {
-         warning( "Forcing overwrite of output file ", outFile);
+         warning( "Forcing overwrite of output file '", outFile, "'");
          unlink(outFile);
       }
    }
@@ -246,21 +249,21 @@ extractGeneModels <- function( gafFile,
    got = system( cmd, intern=TRUE );
    info$gaf_lines = as.integer( sub( " .+", "", sub( "^[ ]+", "", got )));
 
-   gafModelsFile = outFile;
+   geneModelsFile = outFile;
    if (uniqueGene) {
-      gafModelsFile = tempfile( "TEMP_gafFileExtractGenome" );
-      if (file.exists(gafModelsFile)) {
+      geneModelsFile = tempfile( "TEMP_gafFileExtractGenome" );
+      if (file.exists(geneModelsFile)) {
          if (! force) {
-            stop( "Temporary file exists, delete or use force: ", gafModelsFile );
+            stop( "Temporary file exists, delete or use force: ", geneModelsFile );
          } else {
-            warning( "Forcing overrite of pre-existing temporary file: ", gafModelsFile );
+            warning( "Forcing overrite of pre-existing temporary file: ", geneModelsFile );
          }
-         unlink( gafModelsFile );
+         unlink( geneModelsFile );
       }
    }
 
    # Load header line into output
-   cmd = paste(c("head -n1 ", gafFile, " > ", gafModelsFile ), collapse="");
+   cmd = paste(c("head -n1 ", gafFile, " > ", geneModelsFile ), collapse="");
    system( cmd );
 
    dropUnknownGene = " | grep -v -E \"\t[?][|][0-9]\"";
@@ -273,10 +276,10 @@ extractGeneModels <- function( gafFile,
                    " | grep calculated",
                    " | grep chr",
                    dropUnknownGene,
-                   " >> ", gafModelsFile ),
+                   " >> ", geneModelsFile ),
                 collapse= "" );
    system( cmd );
-   cmd = paste(c("wc -l ", gafModelsFile), collapse="");
+   cmd = paste(c("wc -l ", geneModelsFile), collapse="");
    got = system( cmd, intern=TRUE );
    info$gaf_models = as.integer( sub( " .+", "", sub( "^[ ]+", "", got )));
 
@@ -286,12 +289,12 @@ extractGeneModels <- function( gafFile,
    if (uniqueGene) {
       # As grep for what doesn not match, will keep header line automatically
       cmd = paste(
-         c( "grep -v -E \"[02-9]of|1[0-9]of|SLC35E2.9906\" ", gafModelsFile, " > ", outFile ),
+         c( "grep -v -E \"[02-9]of|1[0-9]of|SLC35E2.9906\" ", geneModelsFile, " > ", outFile ),
          collapse="" );
       system( cmd );
 
       # Done with tempCalculate intermediate; calculate line count in out file
-      unlink(gafModelsFile)
+      unlink(geneModelsFile)
       cmd = paste(c("wc -l ", outFile), collapse="");
       got = system( cmd, intern=TRUE );
       info$gaf_models_unique = as.integer( sub( " .+", "", sub( "^[ ]+", "", got )));
@@ -308,23 +311,84 @@ demo.extractGeneModels <- function( gaf ) {
    return( info );
 }
 
-# Load the gene models file into a data frame/
+#' Extract transcript models from the gaf
+#'
+#' This extracts a tab delimited file of all canonical transcript models from the
+#' GAF. Each model in the output file (row) can be refereed to
+#' uniquely by transcript name.
+#'
+#' @param gafFile The full-path name of the GAF file [REQ]
+#' @param outFile The output file name, by default the same as the gafFile, with
+#'   ".geneModels" appended. Will not overwrite unless force= is set true
+#' @param force If the output file exists, overwrite (generates a warning).
+#'
+#' @return The number of transcripts in the output file (should be 73,707)
+#'
+#' @export
+extractTranscriptModels <- function(
+   gafFile,
+   outFile= paste0(gafFile, ".transcriptModels"),
+   force=FALSE
+) {
+
+   # Using filename as a parameter in a system command so need to be careful.
+   if (! is.safeFileName( gafFile )) {
+      stop( "Unsafe character in gaf file name!" );
+   }
+   if (! file.exists(gafFile)) {
+      stop( 'Can\'t find the specified gaf file: \'', gafFile, '\'')
+   }
+   if (! is.safeFileName( outFile )) {
+      stop( "Unsafe character in output transcriptModel file name!" );
+   }
+   if (file.exists(outFile)) {
+      if (! force) {
+         stop( "Output file already exists; use force=TRUE to overwrite: '", outFile, "'")
+      } else {
+         warning( "Forcing overwrite of output file '", outFile, "'");
+         unlink(outFile);
+      }
+   }
+
+   # Load header line into output
+   cmd = paste(c("head -n1 ", gafFile, " > ", outFile ), collapse="");
+   system( cmd );
+
+   # Extract gene models.
+   cmd = paste( c( "grep transcript ", gafFile,
+                   " | grep UCSCgene.Dec2009.fa",
+                   " | grep -v calculated",
+                   " >> ", outFile ),
+                collapse= ""
+   );
+   system( cmd );
+
+   # Count returned lines
+   cmd = paste(c("wc -l ", outFile), collapse="");
+   cmdOut = system( cmd, intern=TRUE );
+   lineCount = as.integer( sub( " .+", "", sub( "^[ ]+", "", cmdOut )));
+
+   return(lineCount - 1);
+}
+
+#' Load the gene models file into a data frame.
+#'
+#' @param file The name of the gene models file extracted from the gaf file
+#'
+#' @return Data frame with the data from the gaf gene models:
+#'
+#'       $gene = gene name
+#'       $chr = chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS
+#'       $strand= strand as *, +, or -
+#'       $gstart=  first base of gene
+#'       $gend=  last base of gene
+#'       $exon= Exon number
+#'       $start= first base of exon
+#'       $end= Last base of exon
+#'       $length= length of the exon in bases
+#'
+#' @export
 loadGeneModels <- function ( file ) {
-   ###
-   #     PARAM file= (string) the name of the gene models file extracted from
-   # the gaf file
-   ###
-   #     RETURNS: Data frame with the data from the gaf gene mode:
-   #       $gene = gene name
-   #       $chr = chromosome as chr#, chr##, chrX, chrY, or chrM
-   #       $strand= strand as *, +, or -
-   #       $gstart=  first base of gene
-   #       $gend=  last base of gene
-   #       $exon= Exon number
-   #       $start= first base of exon
-   #       $end= Last base of exon
-   #       #length= length of the exon in bases
-   ###
 
    geneModelData <- read.delim( file );
 
