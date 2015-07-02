@@ -199,8 +199,9 @@ test_that( 'extractTranscriptModels() can overwrite output file?', {
 })
 
 test_that( 'extractTranscriptModels() returns correct value', {
+   expected_return_value = 4;
    makesFile <- 'data/mock.gaf.transcriptModels'
-   expect_equal( extractTranscriptModels( 'data/mock.gaf' ), 1)
+   expect_equal( extractTranscriptModels( 'data/mock.gaf' ), 4)
    # Clean up after ourselves
    if ( file.exists( makesFile )) {
       unlink( makesFile );

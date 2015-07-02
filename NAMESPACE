@@ -2,7 +2,9 @@
 
 export(extractGeneModels)
 export(extractTranscriptModels)
+export(genomicToModelCoordinates)
 export(grFromCohortDf)
+export(loadGafModels)
 export(loadGeneModels)
 import(GenomicRanges)
 import(IRanges)
