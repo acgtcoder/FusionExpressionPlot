@@ -20,8 +20,6 @@
 #' @import RColorBrewer
 NULL
 
-DEBUG <- 1;
-
 ###
 # Utility functions: testing.
 ###
@@ -206,76 +204,97 @@ expressionGrColorMap <- function( gr ) {
                        binEnds= c(Inf,0.3,0.1,-0.1,-0.3,-Inf) ))
 }
 
-#
-# Data for plotting objects
-#
-
-# Convert genomic positions to plot positions based on a gene model
-# with fixed exon size.
+#' Convert from genomic feature to model coordinates.
+#'
+#' Converts a vector of (+ strand) genomic positions to a vector of coordinates
+#' in a model as described by a GRanges object. The model describes a sequence
+#' of non-ovelapping elements separated by gaps of varying sizes. Genomic
+#' positions are maped 1-1 within elements, but scale to a fixed gap width when
+#' they fall between elements. The GRanges object describing the element model
+#' must be all on one strand of one chromosome. '-' strand models are reveresed
+#' so all coordinates are 5' - 3' transformed.
+#'
+#' @section How to convert to model coordinates:
+#'
+#'   Model coordinates start with '1', corresponding to the genomic position of
+#'   the first element in the GRanges object. Model coordinate end with a value
+#'   that is the sum of all the element widths plus the number of gaps * the
+#'   gapthWidth. Genomic positions before the model (less than any element
+#'   start) are converted to model coordinate 0; genomic positions after the
+#'   mode (greater than any element end are converted to the last model
+#'   coordinate + 1. This can be controlled by the outOfBounds parameter (Not
+#'   implemented).
+#'
+#'   If a genomic position falls within a gap, it is converted to a gap-relative
+#'   position, then shifted 1/2 a position in the 5' direction. This shifted,
+#'   gap-relative position [0.5 ... actualGapWidth - 0.5] is then scaled to fit
+#'   (multiplied by gapWidth/actualGapWidth). The next largest integer (ceiling)
+#'   is taken as the offset into the gap in the model, with the returned model
+#'   coordinate being "the sum of the widths of the exons before" + (gapWidth *
+#'   "the number of gaps before") + "this offset". If the strand is negative,
+#'   the coordinate is relative to the last exon base of the mode instead of the
+#'   first.
+#'
+#' @section The conversion formula:
+#'
+#'   For positive strand coordinate values:
+#'
+#'   \deqn{ coordinate =   sum( widths(elementsBefore)) + count(gapsBefore) *
+#'   gapWidth + ceiling( (p - endPos(elementJustBefore) - 0.5) *
+#'   (gapWidth/thisGapWidth)) }
+#'
+#'   For negative strand coordinate values, an additional transformation is
+#'   applied:
+#'
+#'   \deqn{ coordinate =  sum( widths( allElements )) + count(allGapsB) *
+#'   gapWidth + 1 - posCoordinate }
+#'
+#' @param pos    Vector of integers (required).
+#'
+#'   A vector of chromosome genomic positions to convert to model coordinates.
+#'   Assumed to be on the same chromosome as the provided gene model, although
+#'   not required to be within the gene model.
+#'
+#' @param gene  GRanges object (required).
+#'
+#'   Object giving the model, i.e. gene exons. All elements must be on the same
+#'   chromosome on the same strand in sequence order with no overlaps and no 0
+#'   length introns. Assumes '-' strand genes are described as if their shadow
+#'   on the '+' strand was the real gene, with ony the '-' indicateing anything
+#'   aobut a reverse order.
+#'
+#' @param gapWidth  Integer (default = 100)
+#'
+#'   Fixed gap width. Equivalent is size to an exon of the same length.
+#'
+#' @param outOfBounds 'warning' (default) | 'error' | 'ok'
+#'
+#'   By default, genomic positions can be supplied that are outside the model,
+#'   but a warning will be given, once. "Position outside the gene model found:
+#'   #". Setting outOfBounds='error' will cause the first such position found to
+#'   abort. Setting outOfBounds='ok' means no warning or error will be
+#'   generated.
+#'
+#' @return Integer vector of genomic positions converted to model coordinates.
+#'
+#' @examples
+#' grPos <- GRanges(
+#'    ranges= IRanges(
+#'       start= c( 101, 301, 511, 513, 813 ),
+#'       end= c( 200, 500, 511, 612, 822 )
+#'    ),
+#'    seqnames= c( "chr1" ),
+#'    strand= c( "+" )
+#' );
+#'
+#' @export
 genomicToModelCoordinates <- function(
    pos, gene, gapWidth= 100, outOfBounds='warning'
 ) {
-   ###
-   #      Converts pos, a vector of (+ strand) genomic positions to a vector of
-   # coordinates in a model as described by the GRanges object gene. The
-   # coordinates are 1-1 with those in the gene elements, but with gaps
-   # scaled to a fixed gapWidth. The GRanges gene must be all on one strand of
-   # one chromosome. '-' strand gene models are reveresed so all coordinates are
-   # 5' - 3' transformed (based on first element in granges object).
-   #      The first genomic start position for any element in the GRanges object
-   # is model coordinate '1'. The last model coordinate is the sum of all the
-   # element widths plus the number of gaps * the gapthWidth. Genomic positions
-   # before the model (less than any element start) are converted to model
-   # coordinate 0; genomic positions after the mode (greater than any element
-   # end are converted to the last model coordinate + 1. This can be controlled
-   # by the outOfBounds parameter (Not implemented).
    #
-   #      Due to the required scaling and rounding, there is no way to exactly
-   # define the model coordinate of genomic positions in gaps such that both
-   # gaps larger than gapWidth and gaps smaller than gapWidth are mapped to
-   # intuitively and identically in both positive and negative strand genes.
-   # The chosen method is as follows:
-   #
-   #     If a genomic position falls within a gap, it is converted to a
-   # gap-relative position, then shifted 1/2 a position in the 5' direction.
-   # This shifted, relative position [0.5 ... thisGapWidth - 0.5] is then
-   # scaled by the gapthWidth (gapWidth/thisGapWidth). The next largest integer
-   # (ceiling) is taken as the offset into the gap in the model, with the
-   # returned model coordinate being "the sum of the widths of the exons before"
-   #  + (gapWidth * "the number of gaps before") + "this offset". If the strand
-   # is negative, the coordinate is relative to the last exon base of the mode.
-   # More formally:
-   #
-   #    coordinate = sum( widths(elementsBefore)) + count(gapsBefore) * gapWidth
-   #       + ceiling( (p - endPos(elementJustBefore) - 0.5) *
-   #                   (gapWidth/thisGapWidth))
-   #      if (strand == '--') { coordinate = sum( widths( allElements ))
-   #                                       + count(allGapsB) * gapWidth + 1
-   #                                       - coordinate
-   ###
-   #     PARAM: pos    (REQ)  IntVec
-   # A vector of chromosome genomic positions to convert to model coordinates.
-   # Assumed to be on the same chromosome as the provided gene model, although
-   # not required to be within the gene model.
-   #      PARAM: gene  (REQ)  GRanges
-   # Object giving the model, i.e. gene exons.
-   # All elements must be on the same chromosome on the same strand in sequence
-   # order with no overlaps and no 0 length introns. Assumes '-' strand genes
-   # are described as if their shadow on the '+' strand was the real gene, with
-   # ony the '-' indicateing anything aobut a reverse order.
-   #      PARAM: gapWidth=100  INT
-   # Fixed gap width. Equivalent is size to an exon of the same length.
-   #      PARAM: outOfBounds='warning'
-   # By default, genomic positions can be supplied that are outside the model,
-   # but a warning will be given, once. "Position outside the gene model found: #".
-   # Setting outOfBounds='error' will cause the first such position found to
-   # abort. Setting outOfBounds='ok' means no warning or error will be generated.
-   #      RETURNS: IntVec
-   # The genomic positions converted to model coordinates.
-   #     TODO: Valdate gene
+   # TODO: Valdate gene
    # Check that gene is GRanges object, single chromosome, single stranded,
    # reduced, and ordered.
-   ###
 
    # No overlaps, sorted.
    gene = reduce(gene);
@@ -362,61 +381,6 @@ genomicToModelCoordinates <- function(
       } # END choice = within model
    } # END loop = input genomic positions vector
    return( modelCoordinate );
-}
-
-test_genomicToModelCoordinates <- function() {
-
-   # Exons: 101-200,301-500,511-511,513-612,813-822
-   #          100    200       1      100     10
-   # Introns:   201-300,501-510,512-512,613-812
-   #              100     10       1      200
-   geneModel <- demo.makeGrForTest();
-
-   # Before
-   got = genomicToModelCoordinates( c(1, 100, 101), geneModel, 100 );
-   want = c(0, 0, 1);
-   stopifnot( got == want );
-   # First exon
-   got = genomicToModelCoordinates( c(101, 150, 200), geneModel, 100 );
-   want = c(1, 50, 100);
-   stopifnot( got == want );
-   # First intron
-   got = genomicToModelCoordinates( c(201, 250, 300), geneModel, 100 );
-   want = c(101, 150, 200);
-   stopifnot( got == want );
-   got = genomicToModelCoordinates( c(301, 400, 500), geneModel, 100 );
-   want = c(201, 300, 400);
-   stopifnot( got == want );
-   got = genomicToModelCoordinates( c(501, 502, 510), geneModel, 100 );
-   want = c(405, 415, 495);
-   stopifnot( got == want );
-   got = genomicToModelCoordinates( c(511, 512, 513), geneModel, 100 );
-   want = c(501, 551, 602);
-   stopifnot( got == want );
-   got = genomicToModelCoordinates( c(613, 712, 812), geneModel, 100 );
-   want = c(702, 751, 801);
-   stopifnot( got == want );
-   # After
-   got = genomicToModelCoordinates( c(822, 823, 10000), geneModel, 100 );
-   want = c(811, 812, 812);
-   stopifnot( got == want );
-
-   geneModel <- GRanges(
-      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
-      seqnames= c( "chr1" ),
-      strand= c( "-" )
-   );
-
-   # Before
-   got = genomicToModelCoordinates( c(822, 823, 10000), geneModel, 100 );
-   want = c(1, 0, 0);
-   stopifnot( got == want );
-   # First exon
-   got = genomicToModelCoordinates( c(822, 818, 813), geneModel, 100 );
-   want = c(1, 5, 10);
-   stopifnot( got == want );
-
-   return(TRUE);
 }
 
 # Given a gene model, return a data object that can be used to draw a gene-exon
@@ -822,7 +786,7 @@ plot.fusionExpressionPlotData <- function ( data, title, file= 'temp.pdf',
    );
    par( xpd=NA, mai= c(0.5, 0.5, 0.5, 0.5), omi= c(0,0,0,0) );
 
-   plot( data$xRange, data$yRange, type="n", axes=F, xlab="", ylab="", main=title, );
+   plot( data$xRange, data$yRange, type="n", axes=F, xlab="", ylab="", main=title );
 
    for (i in 1:numGenes) {
       rect( geneRects[[i]]$xStarts, geneRects[[i]]$yBottoms, geneRects[[i]]$xEnds, geneRects[[i]]$yTops,
