@@ -41,26 +41,41 @@ test_is <- function( got, want, message="" ) {
 # Data reduction functions: Continuous to category
 ###
 
-# Get bin name for the range (bin) data points fall into. Good for colors.
-# Note, binEnds will be sorted before assigning labels.
-dataToBinLabels <- function( data, binEnds, binLabels) {
-   ###
-   #     Bins the data as specified by binEnds, then returns a vector of the
-   # same length as data, but with each value replaced by the binLabel. If the
-   # bin labels are colors, this converts data into a color scale. If the bin
-   # labels are the upper (or lower) bin ends, in converts values into their
-   # category maxima (minima).
-   #
-   #     PARAM: data - A vector of numeric data to bin.
-   #     PARAM: binEnds - The end of the bins into which the data is sorted.
-   # One bin would be c(-Inf, Inf). Two bins equally weighted would be
-   # c(-Inf, median(data), Inf). This vector will be sorted before assigning
-   # labels, so reverse the label order instead of providing bins as high to low.
-   #     PARAM: binLabels - The vector of values corresponding to the bins to
-   # convert the data into. For the two bin example above, might use
-   # c('low','high') or c('blue','red');
-   bins = cut(data, binEnds, labels = 1:(length(binEnds) - 1));
-   return(binLabels[as.numeric(levels(bins)[bins])]);
+#' Sort values into bins
+#'
+#' Given a vector of numeric values returns a vector of bin names, where the n
+#' bins to sort into are defined by n+1 bin boundaries (including start and end
+#' boudaries, probably -Inf and Inf). Basically a convienience wrapper around
+#' cut().
+#'
+#' Bins the data values into n bins as s specified by the n+1 binEnds, then
+#' returns a vector of the same length as data, but with each value replaced by
+#' the binLabel for the bin it was sorted into. E.g if the bin labels are
+#' colors, this converts data into a color scale. Values equal to bin boundaries
+#' are put in the lower bin, with the lowest bin boundary also included in the
+#' lowest bin.
+#'
+#' @param data A vector of numeric data to bin. NA values and values above or
+#'   below the lowest bin end are allowed, they convert to NA's in the returned
+#'   label vector.
+#'
+#' @param binEnds The n+1 ends of the n bins into which the data is sorted. One
+#'   bin would be c(-Inf, Inf). Two bins ~ equally weighted would be c(-Inf,
+#'   median(data), Inf). This vector will be sorted before assigning labels, so
+#'   reverse the label order instead of providing bins as high to low. Bin ends
+#'   belong to the lower bin, with the lowest bin end also part of the lowest
+#'   bin.
+#'
+#' @param binLabels The vector of names corresponding to the labesl of the bin a
+#'   value belongs in.
+#'
+#' @return The vector of bin labels corresponding to the bins the data was
+#'   sorted into.
+#'
+#' @export
+sortDataIntoBins <- function(data, binEnds, binLabels) {
+   bins = cut( data, binEnds, labels = 1:( length(binEnds) - 1 ), include.lowest = TRUE );
+   return( binLabels[ as.numeric( levels(bins)[bins] )]);
 }
 
 ###
@@ -128,7 +143,7 @@ grColorMap <- function(
    # columnn added, or, if annotate is set FALSE, returns just the color vector.
    ###
 
-   colorCol <- dataToBinLabels(elementMetadata(gr)[[column]],binEnds,colors);
+   colorCol <- sortDataIntoBins(elementMetadata(gr)[[column]],binEnds,colors);
    if (annotate) {
       return(grAddColumn(gr, as.column, colorCol));
    }
@@ -1371,7 +1386,7 @@ demo.makeGrForTest <- function() {
 #    colors = c("#0571b0", "#92c5de", "#f7f7f7", "#f4a582", "#ca0020");
 #    binEnds = c(0,0.25,0.5,1,2,Inf);
 #    TMPRSS2$GRanges <- addColumn(
-#       TMPRSS2$GRanges, 'color', dataToBinLabels(
+#       TMPRSS2$GRanges, 'color', sortDataIntoBins(
 #          c(0.01,0.125,0.25,0.25,0.5,0.5,1,1,2,2,4,4,8,16), binEnds, colors
 #       )
 #    );
@@ -1398,7 +1413,7 @@ demo.makeGrForTest <- function() {
 #       strand=ERG$strand
 #    );
 #    ERG$GRanges <- addColumn(
-#       ERG$GRanges, 'color', dataToBinLabels(
+#       ERG$GRanges, 'color', sortDataIntoBins(
 #          c(18,12,6,3,1,0.9,0.5,0.3,0.2,0.1,0.05), binEnds, colors
 #       )
 #    );
