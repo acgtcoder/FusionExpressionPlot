@@ -82,7 +82,23 @@ sortDataIntoBins <- function(data, binEnds, binLabels) {
 # GRanges object functions
 ###
 
-# Add a data column to a GRanges object.
+#' Add a data column to a GRanges object.
+#'
+#' Adds a vector as a column in a GRanges object, assuming the data is in the
+#' correct order. This data can be anything describing the range elements, for
+#' instance a vector of colors. This is essentially a convienience wrapper
+#' around the elementMetadata() function from the GRanges package.
+#'
+#' @param gr The granges object to add to add a column to.
+#'
+#' @param name The name of the column when added
+#'
+#' @param vec The data. If not the same length as the GRanges object, will
+#'   attempt to wrap values. If not an even multiple, will error.
+#'
+#' @return The granges object, with the appended column.
+#'
+#' @export
 grAddColumn <- function( gr, name, vec ) {
    elementMetadata(gr)[[name]] <- vec;
    return(gr);

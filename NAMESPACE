@@ -3,6 +3,7 @@
 export(extractGeneModels)
 export(extractTranscriptModels)
 export(genomicToModelCoordinates)
+export(grAddColumn)
 export(grFromCohortDf)
 export(loadGafModels)
 export(loadGeneModels)

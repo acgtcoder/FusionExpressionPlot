@@ -1,4 +1,4 @@
-context("fusionExpressionPlot.R file.")
+context("Functions in the fusionExpressionPlot.R file.")
 
 #
 # genomicToModelCoordinates()
@@ -304,20 +304,8 @@ test_that( 'genomicToModelCoordinates; coordinate extremes ok, -model?', {
 
 })
 
-makeGrFull <- function() {
-   gr <- GRanges(
-      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
-      seqnames= c( "chr1" ),
-      strand= c( "+" )
-   );
-   gr <- grAddColumn(gr, 'exonFillColor', c('red', 'orange', 'yellow', 'green', 'blue'));
-   gr <- grAddColumn(gr, 'exonBorderColor', c('blue', 'green', 'black', 'orange', 'red'));
-   gr <- grAddColumn(gr, 'exonHeight', c(50, 100, 200, 100, 50));
-   return(gr);
-}
-
 #
-# sortDataIntoBins
+# sortDataIntoBins()
 #
 
 test_that( 'sortDataIntoBins; normal use ok?', {
@@ -359,3 +347,60 @@ test_that( 'sortDataIntoBins; sorts input bin values?', {
    want = c('-','-','-','0','0','0','0','+','+')
    expect_equal(got, want)
 })
+
+#
+# grAddColumn()
+#
+
+test_that( 'grAddColumn; normal use ok?', {
+   gr <- GRanges(
+      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
+      seqnames= c( "chr1" ),
+      strand= c( "+" )
+   );
+   exonFillColor <- c('red', 'orange', 'yellow', 'green', 'blue')
+   want <- GRanges(
+      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
+      seqnames= c( "chr1" ),
+      strand= c( "+" ),
+      exonFillColor= c('red', 'orange', 'yellow', 'green', 'blue')
+   );
+   got <- grAddColumn( gr, 'exonFillColor', exonFillColor);
+
+   # manual creation is the same as adding column
+   expect_identical(got, want);
+
+   # can recover the vector from the object
+   expect_equal(got$exonFillColor, exonFillColor);
+
+   # Not affecting the original, but creating a new copy.
+   expect_null(gr$exonFillColor);
+
+})
+
+test_that( 'grAddColumn; wrapping data values works?', {
+   gr <- GRanges(
+      ranges= IRanges( start= c( 101, 301, 511, 513, 813, 1000 ), end= c( 200, 500, 511, 612, 822, 1100 )),
+      seqnames= c( "chr1" ),
+      strand= c( "+" )
+   );
+
+   oneWrapped <- grAddColumn(gr, 'col_1', 1);
+   expect_equal( oneWrapped$col_1, rep(1,6) );
+
+   threeWrapped <- grAddColumn( gr, 'col_3', c('a', 'b', 'c') );
+   expect_equal( threeWrapped$col_3, rep( c('a', 'b', 'c'), 2 ));
+})
+
+makeGrFull <- function() {
+   gr <- GRanges(
+      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
+      seqnames= c( "chr1" ),
+      strand= c( "+" )
+   );
+   gr <- grAddColumn(gr, 'exonFillColor', c('red', 'orange', 'yellow', 'green', 'blue'));
+   gr <- grAddColumn(gr, 'exonBorderColor', c('blue', 'green', 'black', 'orange', 'red'));
+   gr <- grAddColumn(gr, 'exonHeight', c(50, 100, 200, 100, 50));
+   return(gr);
+}
+
