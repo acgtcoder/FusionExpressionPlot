@@ -12,7 +12,7 @@ grAddColumn(gr, name, vec)
 \item{name}{The name of the column when added}
 
 \item{vec}{The data. If not the same length as the GRanges object, will
-attempt to wrap values. If not an even multiple, will error.}
+  attempt to wrap values. If not an even multiple, will error.}
 }
 \value{
 The granges object, with the appended column.

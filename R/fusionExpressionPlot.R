@@ -82,6 +82,35 @@ sortDataIntoBins <- function(data, binEnds, binLabels) {
 # GRanges object functions
 ###
 
+#' Create a simple GRanges object.
+#'
+#' Create a simple Granges object based on a sequence of exons on one strand of
+#' one chromosome. This could be a gene, a transcript, or one side of a fusion.
+#' Defaults to '*' if strand is not specified. Coordinates are given as if the
+#' exons were on the positive strand, in 1-based coordinates. This will be
+#' backawards from the actual sequence if the gene is on the negative strand.
+#'
+#' @param start A vector giving the starting (lower) genomic coordinates of the
+#'   exons. Must be specified.
+#' @param end A vector giving the ending (higher) genomic coordinates of the
+#'   exons. Must be specified.
+#' @param chr The chromosome (singular) on which these exons occur, like 'chr1'
+#'   or 'chrX'. Must be specified.
+#' @param strand The strand the exons are actually on, as '+', '-', or '*'.
+#'   Defaults to '*' if not specified.
+#' @return The genomicRanges object built from the exons.
+#' @export
+grNew <- function( start, end, chr, strand= '*' ) {
+
+   gr <- GRanges(
+      ranges= IRanges( start=start, end=end ),
+      seqnames= chr,
+      strand= strand
+   );
+   return(gr)
+}
+
+
 #' Add a data column to a GRanges object.
 #'
 #' Adds a vector as a column in a GRanges object, assuming the data is in the
@@ -104,61 +133,79 @@ grAddColumn <- function( gr, name, vec ) {
    return(gr);
 }
 
-# Add a column of color values to a GRange object based on a numeric data column.
-# Must supply the ranges and the colors to go with those ranges. Usess colorBrewer
-grColorMap <- function(
-   gr, binEnds, column=1, brewerPaletteName= 'RdBu',
-   colors= rev(brewer.pal( length(binEnds) - 1, brewerPaletteName)),
-   as.column = 'exonColor', annotate=TRUE
-) {
-   ###
-   #      Add a column of color values as metadata to a GRanges object, mapped
-   # from an existing column of numeric metadata. Which column to map can be
-   # specified by column name or index. The data from that column will be binned
-   # based on a specified sequence of binEnds.
-   #
-   #      The color assigned will be those from the brewer palette named (with
-   # the number of levels auto selected based on the bin ends). It is possible
-   # to assigne a vector of colors directly, in which case the brewer palette
-   # name is ignored. Note that the order of the bin ends matters, as probably
-   # want high to low if representing as red-blue, but may want low to high if
-   # using a sequential pallete.
-   #
-   #     Returns the gRanges object with the color metadata column added, or if
-   # annotate is set false, returns just the color vector.
-   ###
-   #     PARAM gr - The GRanges object to annotate.
-   #     PARAM column= 1 - The column index or name of the numeric data in
-   # gr to color map.
-   #     PARAM binEnds= The sequence of cut-points defining the bins into which
-   # the data will be split. Each bin will correspond to a color in the provided
-   # color palette, providing a mapping of each value to a color. Bins are open
-   # on the left and closed on the right (meaning values exactly matching bin
-   # ends will be in the bin to the left.) No data value should be less than or
-   # equal to the lowest bin end, or greater than the upper bin end, otherwise
-   # NA values will result. Normally one would have the first and last bin end
-   # as the special values Inf and -Inf.
-   #     PARAM brewerPaletteName= 'RdBu' - The name of the RColorBrewer palatte.
-   # For example palattes: library(RColorBrewer); display.brewer.all(). Setting
-   # colors causes this to be ignored.
-   #     For diverging values, can have 3 - 11 bins, allowed values are:
-   # BrBG PiYG PRGn PuOr RdBu RdGy RdYlBu RdYlGn Spectral.
-   #     For sequential values, can have 3 - 8 value, allowed values are:
-   # Blues BuGn BuPu GnBu Greens Greys Oranges OrRd PuBu PuBuGn PuRd Purples
-   # RdPu Reds YlGn YlGnBu YlOrBr YlOrRd.
-   #     For qualitative palletes, can have 3 to (n) where n varies by palette:
-   # Accent (8), Dark2 (8), Paired (12), Pastel1 (9), Pastel2 (8), Set1 (9),
-   # Set2 (8), Set3 (12)
-   #     PARAM colors= * - Can specify an explicit vector of colors to
-   # override the color-brewer palatte selection. The number of colors will
-   # have to be one less than the number of bin ends.
-   #     PARAM as.column= 'color' - The name of the metadata column added to
-   # the GRanges object.
-   ###
-   #     RETURNS gr | vector - The GRanges object passed in, but with the color
-   # columnn added, or, if annotate is set FALSE, returns just the color vector.
-   ###
 
+#' Add a category column to a GRange object
+#'
+#' Adds a column of labels as metadata to a GRanges object, mapped from an
+#' existing column of numeric metadata. Which column to map can be specified by
+#' column name or index. The data from that column will be binned based on the
+#' given binEnds and the matching bin label will be used. By default assumes you
+#' are assinging a color map using a colorBrewere pallete, but any category
+#' labels can be used. To add a category column based on an external vector,
+#' just use sortDataIntoBins and grAddColumn.
+#'
+#' @section Color Brewer Palletes:
+#'
+#'   If no labels are specified, a vector of colors will be assigned using the
+#'   brewer palette named (RdBu if none specified). The number of colors needed
+#'   will be determined automatically from the binEnds provided. To use
+#'   different colors, just specify them manually as bin labels. Doing so is no
+#'   different than assigning any lables, colors or otherwise. The color brewer
+#'   palette is just a convienient shortcut and is ignored if labels are given.
+#'   If no version of the given palette has the number of levels required by the
+#'   bin ends an error will occur.
+#'
+#'   For diverging values, can have 3 - 11 bins, allowed values are
+#'
+#'   BrBG PiYG PRGn PuOr RdBu RdGy RdYlBu RdYlGn Spectral.
+#'
+#'   For sequential values, can have 3 - 8 value, allowed values are:
+#'
+#'   Blues BuGn BuPu GnBu Greens Greys Oranges OrRd PuBu PuBuGn PuRd Purples
+#'   RdPu Reds YlGn YlGnBu YlOrBr YlOrRd.
+#'
+#'   For qualitative palletes, can have 3 to (n) where n varies by palette:
+#'
+#'   Accent (8), Dark2 (8), Paired (12), Pastel1 (9), Pastel2 (8), Set1 (9),
+#'   Set2 (8), Set3 (12)
+#'
+#' @examples
+#' # Display available palletes.
+#' library(RColorBrewer);
+#' display.brewer.all()
+#'
+#' @param gr The GRanges object to annotate.
+#'
+#' @param column The metadata column in the GRange object to determine labels
+#' from. Can specify the column by name or by (metadata) column index.
+#'  map. Defaults to 1.
+#'
+#' @param binEnds The sequence of cut-points defining the bins into which the
+#'   data will be split. Each bin will correspond to a label in the provided
+#'   labels vector or color palette, providing a mapping of each value to a
+#'   label or color. Values exactly matching bin ends will be in the lower bin.
+#'   NAs or values outside the range will map to NAs. Normally the first and
+#'   last bin ends are the special values Inf and -Inf. Note: bin ends will be
+#'   sorted from smallest to largest before mapping, so make sure lables are
+#'   ordered to match
+#'
+#' @param brewerPaletteName The name of the RColorBrewer palatte to use for bin
+#' labels, by default 'RdBu'. Setting labels causes this to be ignored.
+#'
+#' @param labels The vector of labels to use as bin names. The number of colors will
+#' have to be one less than the number of bin ends. If specified, brewerPaletteName is ignored
+#'
+#' @param as.column The name of the metadata column added to the GRanges object.
+#'
+#' @return the GRanges object with the new column added, or if annotate is set
+#'   FALSE, just the label (color) vector.
+#'
+#' @export
+grLabelMap <- function(
+      gr, binEnds, column=1, brewerPaletteName= 'RdBu',
+      labels= rev(brewer.pal( length(binEnds) - 1, brewerPaletteName)),
+      as.column = 'exonColor', annotate=TRUE
+) {
    colorCol <- sortDataIntoBins(elementMetadata(gr)[[column]],binEnds,colors);
    if (annotate) {
       return(grAddColumn(gr, as.column, colorCol));
@@ -172,44 +219,59 @@ grColorMap <- function(
 # GRanges object factories
 ###
 
-# Get a list of GRange objects by gene for a column of sample data
-# extracted from a data frame with gene + exon rows and sample columns.
-
+#' Extract GRange objects from cohort exon expression data
+#'
+#' Given a dataframe describing exon expression for a sample cohort, generate a
+#' list of GRange objects for one sample, by selected genes. Each GRange object
+#' is identified by gene name and includes a meta-data column giving the
+#' expression data.
+#'
+#' @section Cohort exon expression data:
+#'
+#'   The input dataframe must have the following columns:
+#'
+#'   \describe{
+#'       \item{chr}{
+#'   The chromosome this exon is on, as 'chr1'...'chr22', chrX', 'chrY', or
+#'   'chrM'.}
+#'       \item{start}{
+#'   The position of the first base of the exon.}
+#'       \item{end}{
+#'   The position of the last base of the exon.}
+#'       \item{strand}{
+#'   The strand of this exon (+,-, or *). All exons in a gene should have the
+#'   same strand.}
+#'       \item{gene}{
+#'   The name of this gene. All exons in a gene should have the same name, and
+#'   no exons from different genes should have the same name.}
+#'       \item{***}{
+#'   The normalized expression value for this exon in sample named "***". Should
+#'   have one column for every sample in the cohort. Sample names may not be
+#'   "chr", "start", "end", "strand", "gene", and must be unique.}
+#'   }
+#'
+#'   Start and end are assumed to be 1 based, but this does not really matter as
+#'   long as all positions here and in any position data (i.e. fusions) used
+#'   with this data all have the same base.
+#'
+#' @param df A dataframe with gene model and exon expression. Required to have
+#'   the following columns: 'chr', 'start', 'end', 'strand', 'gene', and one
+#'   column for each sample.
+#'
+#' @param genes The names of the genes to extract from the cohort data frame.
+#'
+#' @param sample The name of the sample to extract from the df. Required
+#'
+#' @param column The metadata column name under which the expression data is
+#'   added to the GRange objects. By default this is 'exonData'
+#'
+#' @return A List of GRanges object for the gene, with start and end positions
+#'   of the exon specified, and with a metadata column "relativeExpression"
+#'   giving the relative expression for the selected gene in the selected
+#'   sample.
+#'
 #' @export
 grFromCohortDf <- function( df, genes, sample, column='exonData' ) {
-   ###
-   #     Given a dataframe describing exon expression (for all samples in the
-   # cohort to consider), a vectr df gene names, and a sample name, returns a
-   # list of GRanges object, by gene, with the sample data column as an extra
-   # data column.
-   #     The input dataframe must have the following columns: chr, start, end,
-   # strand, gene, and then one column for each sample. The data in the sample
-   # columns are assumed to be the same measurement for each exon in every gene.
-   # Start and end are assumed to be 1 based, but this does not really matter
-   # as long as all positions here and in any position data (i.e. fusions)
-   # used with this data all have the same base.
-   ###
-   #     PARAM: df - A dataframe with gene model and exon expression.
-   #          df$chr    - The chromosome this exon is on, as 'chr1'...'chr22',
-   # 'chrX', 'chrY', or 'chrM'.
-   #          df$start  - The position of the first base of the exon.
-   #          df$end    - The position of the last base of the exon.
-   #          df$strand - The strand of this exon (+,-, or *). All exons in a
-   # gene should have the same strand.
-   #          df$gene   - The name of this gene. All exons in a gene should have
-   # the same name, and no exons from different genes should have the same name.
-   #          df$***    - The normalized expression value for this exon in sample
-   # named "***". Should have one column for every sample in the cohort. Sample
-   # names may not be "chr", "start", "end", "strand", "gene", or be repeated.
-   #      PARAM: genes - The gene names to extract from the df. Must exist.
-   #      PARAM: sample - The sample to extract from the df. Must exist.
-   #      PARAM: column - The metadata column name under which the expression
-   # data is added to the granges object.
-   ###
-   #     RETURN: A List of GRanges object for the gene, with start and end positions of
-   # the exon specified, and with a metadata column "relativeExpression"
-   # giving the relative expression for the selected gene in the selected sample.
-   ###
    grList = list()
    for (gene in genes ) {
       geneDf <- df[df$gene == gene,c('chr', 'start', 'end', 'strand', 'gene', sample)];
@@ -229,9 +291,9 @@ grFromCohortDf <- function( df, genes, sample, column='exonData' ) {
 # Specialized functions for use in relative expression graphs
 ###
 
-# The grColorMap as used with exon expression
-expressionGrColorMap <- function( gr ) {
-   return( grColorMap( gr, column='relativeExpression', as.column = 'exonFillColor',
+# The grLabelMap as used with exon expression
+expressionGrLabelMap <- function( gr ) {
+   return( grLabelMap( gr, column='relativeExpression', as.column = 'exonFillColor',
                        binEnds= c(Inf,0.3,0.1,-0.1,-0.3,-Inf) ))
 }
 
@@ -414,31 +476,79 @@ genomicToModelCoordinates <- function(
    return( modelCoordinate );
 }
 
-# Given a gene model, return a data object that can be used to draw a gene-exon
-# plot or rectangles
+#' Plotable rectangles from GRanges Object
+#'
+#' Given a genomicRanges Object, return the data needed to plot it as a sequence
+#' of rectangles based on widths. Gaps are all fixed at a single intronWidth.
+#' Height, fill color, and border color for the exon rectangles can be specified
+#' on a per-exon basis (vector-wrapped), or given in the genomicRanges object
+#' (as metadata colums, by  default exonHeight, exonFillColor, and
+#' exonBorderColor). Returns the rectangle as a list of data, as specified
+#' below. Uses the genomicToModelCoordinates function, passing throught the
+#' parameters needed
+#'
+#' @param gr The GenomicRanges object to plot.
+#'
+#'   Object giving the gene to calculate the parameters for. Passed through to
+#'   genomicToModelCoordinates as its gene parameter. Besides the criteria
+#'   specified there, may also contain data columns 'exonHeight',
+#'   'exonFillColor' and 'exonBorderColor'. If present, the values in these
+#'   columns will be used instead on the equivalently names parameters to this
+#'   function.
+#'
+#' @param intronWidth The fixed spacing to use for gaps between rectangles.
+#'
+#'   The width of the itron, the x spacing between the exon rectangles. Passed
+#'   through to genomicToModelCoordinates as its gapWidth parameter. Defaults to
+#'   100.
+#'
+#' @param exonHeights The vector of heights to use for the rectangles.
+#'
+#'   If fewer than the number of elements are givien, will be wrapped. If not
+#'   specified exonHeightsCol must contain the column name in the GRanges object
+#'   to use instead, by default it looks for column 'exonHeight'.
+#'
+#' @param exonFillColors The vector of fill colors to use for the rectangles.
+#'
+#'   If fewer than the number of elements are givien, will be wrapped. If not
+#'   specified exonFillColors must contain the column name in the GRanges object
+#'   to use instead, by default it looks for column 'exonFillColor'.
+#'
+#' @param exonBorderColors The vector of border colors to use for the
+#'   rectangles.
+#'
+#'   If fewer than the number of elements are givien, will be wrapped. If not
+#'   specified exonBorderColors must contain the column name in the GRanges
+#'   object to use instead, by default it looks for column 'exonBorderColor'.
+#'
+#' @param exonHeightsCol The name of GRanges column to use for exonHeights, if
+#'   not specified. By default 'exonHeight'
+#'
+#' @param exonFillColorsCol The name of GRanges column to use for
+#'   exonFillColors, if not specified. By default 'exonFillColor'
+#'
+#' @param exonBorderColorsCol The name of GRanges column to use for
+#'   exonBorderColors, if not specified. By default 'exonBorderColor'
+#'
+#' @return A list with the following elements:
+#'
+#'   \describe{
+#'       \item{xStarts}{The low x coordinate; the left side of each rectangle.}
+#'       \item{xEnds}{The high x coordinate; the right side of each rectangle.}
+#'       \item{yBottoms}{The low y coordinate; the bottom of each rectangle.}
+#'       \item{yTops}{The high y coordinate; the top of each rectangle.}
+#'       \item{fillColors}{The fill color for each rectangle.}
+#'       \item{fillColors}{The border color for each rectangle.}
+#'       \item{xRange}{c(<min x value>, <max x value).}
+#'       \item{yRange}{c(<min y value>, <max y value).}
+#'   }
+#'
+#' @export
 grToRect <- function (
-   gene, intronWidth= 100, exonHeights= 100,
-   exonFillColors= 'blue', exonBorderColors= 'black'
+   gene, intronWidth= 100,
+   exonHeights= 100, exonFillColors= 'blue', exonBorderColors= 'black',
+   exonHeightsCol='exonHeights'
 ) {
-   # Given a genomicRanges Object, return the data needed to plot it as a
-   # sequence of rectangles based on the exon widths. Introns are all fixed at
-   # the single intronWidth. Height, fill color, and border color for the exon
-   # rectangles can be specified on a per-exon basis (vector-wrapped), or given in
-   # the genomicRanges object (as metadata colums" exonHeight, exonFillColor,
-   # and exonBorderColor). Returns a list of data as specified below. Uses the
-   # genomicToModelCoordinates function, passing throught the parameters
-   # needed
-   ###
-   #      PARAM: gene  (REQ)  GRanges
-   # Object giving the gene to calculate the parameters for. Passed through to
-   # genomicToModelCoordinates as its gene parameter. Besides the criteria
-   # specified there, may also contain data columns 'exonHeight', 'exonFillColor'
-   # and 'exonBorderColor'. If present, the values in these columns will be used
-   # instead on the equivalently names parameters to this function.
-   #     PARAM: intronWidth=100  Int
-   # The width of the itron, the x spacing between the exon rectangles. Passed
-   # through to genomicToModelCoordinates as its gapWidth parameter.
-   ###
 
    rect <- list();
    rect$onReverseStrand = (as.character(strand(gene)[1]) == '-');
@@ -851,9 +961,9 @@ plot.fusionExpressionPair <- function( geneName1, geneName2, fusions1, fusions2,
    gr2 <- grFromCohortDf(cohortExpressionDF, geneName2, sample, column='relativeExpression')[[geneName2]];
    if (DEBUG) { print("Gene 2, before color mapping"); print( gr2 ); }
 
-   gr1 <- expressionGrColorMap( gr1 );
+   gr1 <- expressionGrLabelMap( gr1 );
    if (DEBUG) { print("Gene 1, after color mapping"); print( gr1 ); }
-   gr2 <- expressionGrColorMap( gr2 );
+   gr2 <- expressionGrLabelMap( gr2 );
    if (DEBUG) { print("Gene 2, after color mapping"); print( gr2 ); }
 
    geneNames <- c(geneName1, geneName2);
@@ -884,7 +994,7 @@ plot.fusionExpressionOne <- function( geneName1, fusions1, sample, cohortExpress
 
    gr <- grFromCohortDf(cohortExpressionDF, geneName1, sample, column='relativeExpression')[[geneName1]];
 
-   gr <- expressionGrColorMap( gr );
+   gr <- expressionGrLabelMap( gr );
 
    genes <- list();
    genes[[geneName1]] <- gr
@@ -1351,8 +1461,8 @@ demo.plot.fusionExpressionPlotData2 <- function() {
 #          expressionGr1 <- expressionGrFactory( expresionDF, gene= plot$gene1, sample= plot$sample );
 #          expressionGr2 <- expressionGrFactory( expresionDF, gene= plot$gene2, sample= plot$sample );
 #          cutPoints <- c(Inf, 0.3, 0.1, -0.1, -0.3, -Inf);
-#          expressionGr1 <- grColorMap(expressionGr1, cutPoints, column='relativeExpression' );
-#          expressionGr2 <- grColorMap(expressionGr2, cutPoints, column='relativeExpression' );
+#          expressionGr1 <- grLabelMap(expressionGr1, cutPoints, column='relativeExpression' );
+#          expressionGr2 <- grLabelMap(expressionGr2, cutPoints, column='relativeExpression' );
 #
 #          pdf(file=paste0(baseDir,'/',plot$name), width=1000/96, height=(100+220)/96 );
 #          plot.geneModelFusion(
@@ -1371,17 +1481,18 @@ demo.plot.fusionExpressionPlotData2 <- function() {
 
 
 demo.makeGrForTmprss2 <- function() {
-   exons <- "42836479-42838080,42839661-42839813,42840323-42840465,42842575-42842670,42843733-42843908,42845252-42845423,42848504-42848547,42851099-42851209,42852403-42852529,42860321-42860440,42861434-42861520,42866283-42866505,42870046-42870116,42879877-42879992";
-   iRanges <- IRanges(
-      start= as.numeric(sub("-.+", "", unlist(strsplit(exons, ",")))),
-      end=   as.numeric(sub(".+-", "", unlist(strsplit(exons, ","))))
-   );
-   gr <- GRanges(
-      seqnames <- as.factor( "chr21" ),
-      ranges   <- iRanges,
-      strand   <- '-'
-   );
-   return( gr )
+   exons <-
+      "42836479-42838080,42839661-42839813,42840323-42840465,42842575-42842670,42843733-42843908,42845252-42845423,42848504-42848547,42851099-42851209,42852403-42852529,42860321-42860440,42861434-42861520,42866283-42866505,42870046-42870116,42879877-42879992";
+   iRanges <- IRanges(start = as.numeric(sub("-.+", "", unlist(
+      strsplit(exons, ",")
+   ))),
+   end =   as.numeric(sub(".+-", "", unlist(
+      strsplit(exons, ",")
+   ))));
+   gr <- GRanges(seqnames <- as.factor("chr21"),
+                 ranges   <- iRanges,
+                 strand   <- '-');
+   return(gr)
 }
 
 demo.makeGrForTest <- function() {

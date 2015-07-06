@@ -1,6 +1,50 @@
 context("Functions in the fusionExpressionPlot.R file.")
 
 #
+# grNew
+#
+
+test_that( 'grNew creates correct genomicRanges objects, everything specified', {
+   start <- c( 101, 301, 511, 513, 813 )
+   end <- c( 200, 500, 511, 612, 822 )
+   chr <- 'chr1'
+   strand <- '+'
+   got <- grNew( start= start, end= end, chr=chr, strand= strand )
+   want <- GRanges(
+      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
+      seqnames= c( "chr1" ),
+      strand= c( "+" )
+   );
+   expect_is(got, 'GRanges')
+   expect_equal(got, want)
+   expect_equal( start(got), start )
+   expect_equal( end(got), end )
+   expect_equal( as.character( seqnames(got) ), rep( chr, length(start) ))
+   expect_equal( as.character( strand(got) ), rep( strand, length(start) ))
+})
+
+test_that( 'grNew, one exon, strand by default', {
+   start <- 101
+   end <- 200
+   chr <- 'chrX'
+   strand <- '*'
+
+   got <- grNew( start= start, end= end, chr=chr )
+
+   want <- GRanges(
+      ranges= IRanges( start= c( 101 ), end= c( 200 )),
+      seqnames= c( "chrX" ),
+      strand= c( "*" )
+   );
+   expect_is(got, 'GRanges')
+   expect_equal(got, want)
+   expect_equal( start(got), start )
+   expect_equal( end(got), end )
+   expect_equal( as.character( seqnames(got) ), rep( chr, length(start) ))
+   expect_equal( as.character( strand(got) ), rep( strand, length(start) ))
+})
+
+#
 # genomicToModelCoordinates()
 #
 
@@ -13,10 +57,11 @@ context("Functions in the fusionExpressionPlot.R file.")
 #          1-100,102-301,303-303,305-404,406-415
 
 makeGrPos <- function() {
-   gr <- GRanges(
-      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
-      seqnames= c( "chr1" ),
-      strand= c( "+" )
+   gr <- grNew(
+      start=  c( 101, 301, 511, 513, 813 ),
+      end=    c( 200, 500, 511, 612, 822 ),
+      chr=    "chr1",
+      strand= "+"
    );
    return(gr);
 }
@@ -145,11 +190,11 @@ test_that( 'genomicToModelCoordinates; coordinate extremes ok, +model?', {
    #                100000
 
    # Model:   1-100000,100101-100200
-   gr <- GRanges(
-      ranges= IRanges( start= c( 101, 200101 ),
-                       end=   c( 100100, 200200 )),
-      seqnames= c( "chr1" ),
-      strand= c( "+" )
+   gr <- grNew(
+      start=  c(    101, 200101 ),
+      end=    c( 100100, 200200 ),
+      chr=    "chr1",
+      strand= "+"
    );
 
    # Before
@@ -192,10 +237,11 @@ test_that( 'genomicToModelCoordinates; coordinate extremes ok, +model?', {
 # Model:   811-712,611-412,311-311,210-111,10-1
 
 makeGrNeg <- function() {
-   gr <- GRanges(
-      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
-      seqnames= c( "chr1" ),
-      strand= c( "-" )
+   gr <- grNew(
+      start=  c( 101, 301, 511, 513, 813 ),
+      end=    c( 200, 500, 511, 612, 822 ),
+      chr=    "chr1",
+      strand= "-"
    );
    return(gr);
 }
@@ -265,11 +311,11 @@ test_that( 'genomicToModelCoordinates; coordinate extremes ok, -model?', {
    #                100000
 
    # Model:   1-100,201-100200
-   gr <- GRanges(
-      ranges= IRanges( start= c( 101, 200101 ),
-                       end=   c( 100100, 200200 )),
-      seqnames= c( "chr1" ),
-      strand= c( "-" )
+   gr <- grNew(
+      start=  c(    101, 200101 ),
+      end=    c( 100100, 200200 ),
+      chr=    "chr1",
+      strand= "-"
    );
 
    # Before
@@ -353,10 +399,11 @@ test_that( 'sortDataIntoBins; sorts input bin values?', {
 #
 
 test_that( 'grAddColumn; normal use ok?', {
-   gr <- GRanges(
-      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
-      seqnames= c( "chr1" ),
-      strand= c( "+" )
+   gr <- grNew(
+      start=  c( 101, 301, 511, 513, 813 ),
+      end=    c( 200, 500, 511, 612, 822 ),
+      chr=    "chr1",
+      strand= "+"
    );
    exonFillColor <- c('red', 'orange', 'yellow', 'green', 'blue')
    want <- GRanges(
@@ -379,10 +426,11 @@ test_that( 'grAddColumn; normal use ok?', {
 })
 
 test_that( 'grAddColumn; wrapping data values works?', {
-   gr <- GRanges(
-      ranges= IRanges( start= c( 101, 301, 511, 513, 813, 1000 ), end= c( 200, 500, 511, 612, 822, 1100 )),
-      seqnames= c( "chr1" ),
-      strand= c( "+" )
+   gr <- grNew(
+      start=  c( 101, 301, 511, 513, 813, 1000 ),
+      end=    c( 200, 500, 511, 612, 822, 1100 ),
+      chr=    "chr1",
+      strand= "+"
    );
 
    oneWrapped <- grAddColumn(gr, 'col_1', 1);
@@ -392,11 +440,120 @@ test_that( 'grAddColumn; wrapping data values works?', {
    expect_equal( threeWrapped$col_3, rep( c('a', 'b', 'c'), 2 ));
 })
 
+#
+# grLabelMap()
+#
+
+test_that( 'grLabelMap; adds or returns correct column for default pallette', {
+   fail( 'Test column returned not implemented' )
+   fail( 'Test column added not implemented' )
+   fail( 'Test original gr unaffected not implemented' )
+})
+
+test_that( 'grLabelMap; adds or returns correct column for given pallette', {
+   fail( 'Test column returned not implemented' )
+   fail( 'Test column added not implemented' )
+   fail( 'Test original gr unaffected not implemented' )
+})
+
+test_that( 'grLabelMap; adds or returns correct column for given labels', {
+   fail( 'Test column returned not implemented' )
+   fail( 'Test column added not implemented' )
+   fail( 'Test original gr unaffected not implemented' )
+})
+
+#
+# grFromCohortDf()
+#
+
+test_that( 'grLabelMap from cohort with one sample, one gene', {
+   fail( 'Returns all genes if unfiltered, with correct granges objects' )
+   fail( 'Returns all and only selected genes if filtered, with correct granges objects' )
+})
+
+test_that( 'grLabelMap from cohort with two samples, two gene', {
+   fail( 'Returns all genes for 1st sample if unfiltered, with correct granges objects' )
+   fail( 'Returns all and only selected genes for 1st sample if filtered, with correct granges objects' )
+   fail( 'Returns all genes for 2nd sample if unfiltered, with correct granges objects' )
+   fail( 'Returns all and only selected genes for 2nd sample if filtered, with correct granges objects' )
+})
+
+#
+# grToRect()
+#
+
+test_that( 'grToRect generates correct rectangle, all defaults', {
+   fail( 'Correct xStarts' )
+   fail( 'Correct xEnds' )
+   fail( 'Correct yBottoms' )
+   fail( 'Correct yTops' )
+   fail( 'Correct fill colors' )
+   fail( 'Correct border colors' )
+   fail( 'Correct xRanges' )
+   fail( 'Correct yRanges' )
+})
+
+test_that( 'grToRect generates correct rectangle, just one exon', {
+   fail( 'Correct xStarts' )
+   fail( 'Correct xEnds' )
+   fail( 'Correct yBottoms' )
+   fail( 'Correct yTops' )
+   fail( 'Correct fill colors' )
+   fail( 'Correct border colors' )
+   fail( 'Correct xRanges' )
+   fail( 'Correct yRanges' )
+})
+
+test_that( 'grToRect generates correct rectangle, new column names', {
+   fail( 'Correct xStarts' )
+   fail( 'Correct xEnds' )
+   fail( 'Correct yBottoms' )
+   fail( 'Correct yTops' )
+   fail( 'Correct fill colors' )
+   fail( 'Correct border colors' )
+   fail( 'Correct xRanges' )
+   fail( 'Correct yRanges' )
+})
+
+test_that( 'grToRect generates correct rectangle, manual values', {
+   fail( 'Correct xStarts' )
+   fail( 'Correct xEnds' )
+   fail( 'Correct yBottoms' )
+   fail( 'Correct yTops' )
+   fail( 'Correct fill colors' )
+   fail( 'Correct border colors' )
+   fail( 'Correct xRanges' )
+   fail( 'Correct yRanges' )
+})
+
+test_that( 'grToRect generates correct rectangle, manual values wrap', {
+   fail( 'Correct xStarts' )
+   fail( 'Correct xEnds' )
+   fail( 'Correct yBottoms' )
+   fail( 'Correct yTops' )
+   fail( 'Correct fill colors' )
+   fail( 'Correct border colors' )
+   fail( 'Correct xRanges' )
+   fail( 'Correct yRanges' )
+})
+
+test_that( 'grToRect generates correct rectangle, manual values and new column names', {
+   fail( 'Correct xStarts' )
+   fail( 'Correct xEnds' )
+   fail( 'Correct yBottoms' )
+   fail( 'Correct yTops' )
+   fail( 'Correct fill colors' )
+   fail( 'Correct border colors' )
+   fail( 'Correct xRanges' )
+   fail( 'Correct yRanges' )
+})
+
 makeGrFull <- function() {
-   gr <- GRanges(
-      ranges= IRanges( start= c( 101, 301, 511, 513, 813 ), end= c( 200, 500, 511, 612, 822 )),
-      seqnames= c( "chr1" ),
-      strand= c( "+" )
+   gr <- grNew(
+      start=  c( 101, 301, 511, 513, 813 ),
+      end=    c( 200, 500, 511, 612, 822 ),
+      chr=    "chr1",
+      strand= "+"
    );
    gr <- grAddColumn(gr, 'exonFillColor', c('red', 'orange', 'yellow', 'green', 'blue'));
    gr <- grAddColumn(gr, 'exonBorderColor', c('blue', 'green', 'black', 'orange', 'red'));
