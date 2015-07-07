@@ -1,0 +1,118 @@
+---
+title: "Working with GRange objects"
+author: "Stuart R. Jefferys"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Working with GRange objects}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+# Set output to use #=> at start of output lines for the rest of this document.
+knitr::opts_chunk$set(collapse = TRUE, comment = "#=>")
+```
+
+FusionExpressionPlot takes advantage of the genomicRanges package and its GRange
+objects to manage genomic location data. These is only a moderate difference
+between a GRange object and a data frame, but GRange objects have lots of useful
+features. Only a few of these features are used in this package, mostly wrapped
+in "convienience" functions. For GRange objects in all their glory, see [TODO
+Link to info about GRange objects].
+
+As used in this package, a GRange object represents the exon start and stop
+points of one genomic object (gene, transcript, fusion end, etc). We only use
+genomic ranges that reside on one strand of one chromosome. More complicated
+features (such as a list of genes or a full two-ended fusion) require multiple
+GRange objects to describe, often bound into a list.
+
+### `grNew()` - Create simple GRange objects
+
+`grNew()` can be used to easily create simple GRange objects from a list of 
+exons. In keeping with the role of GRange objects in this package, only 
+single-strand, single chromosome objects can be created with grNew().
+
+```{r}
+library(FusionExressionPlot)
+gr <- grNew(
+   start= c( 101, 301, 511, 513, 813 ),
+   end= c( 200, 500, 511, 612, 822 ),
+   chr= "chr1",
+   strand= "+"
+)
+gr
+```
+
+The GRange object returned can be queried in various ways using simple functions
+that have been extended to apply to GRange objects. These functions are part of the
+normal GenomicRanges package.
+
+```{r}
+library(GenomicRanges)
+
+start(gr)
+end(gr)
+
+as.character(strand(gr))
+strand(gr)
+
+as.character(seqnames(gr))
+seqnames(gr)
+
+width(gr)
+width(gaps(gr))
+gaps(gr)
+
+length(gr)
+```
+
+### `grAddColumn()` - Add meta-data columns to GRange objects
+
+`grAddColumn()` can be used to easily add a column of data to a
+GRanges object. This will set one value per row in the GRanges
+object, wrapping if needed.
+
+```{r}
+gr <- grAddColumn(gr, 'exonFillColor', c('red', 'orange', 'yellow', 'green', 'blue'));
+gr
+
+gr <- grAddColumn(gr, 'exonBorderColor', c('blue', 'green', 'black', 'orange', 'red'));
+gr <- grAddColumn(gr, 'exonHeight', c(50, 100, 200, 100, 50));
+gr <- grAddColumn(gr, 'gene', 'forTesting');
+gr
+```
+
+After adding, a metadata column can be retrieved from the GRange object as a
+vector using the `$` data frame notation (like `GRangeObj$colName`). To
+subset a genomic range object (returning another genomic range object), you can
+use the normal `[]` notation (like `GRangeObj[,'colName']`). This behavior is
+part of the normal GenomicRanges package.
+
+```{r}
+gr$exonFillColor
+gr$exonHeight
+gr$gene
+
+gr[, 'exonFillColor']
+gr[1:3, c('exonFillColor', 'exonBorderColor')]
+gr[1,]
+```
+
+### `grToLocationString()` and `grFromLocationString()` - Location strings
+
+
+```{r}
+demo.makeGrForTmprss2 <- function() {
+   exons <- "42836479-42838080,42839661-42839813,42840323-42840465,42842575-42842670,42843733-42843908,42845252-42845423,42848504-42848547,42851099-42851209,42852403-42852529,42860321-42860440,42861434-42861520,42866283-42866505,42870046-42870116,42879877-42879992";
+gr <- grNew(
+      start=  as.numeric(sub("-.+", "", unlist(strsplit(exons, ",")))),
+      end=    as.numeric(sub(".+-", "", unlist(strsplit(exons, ",")))),
+      chr=    'chr21',
+      strand= '-'
+   );
+   return( gr )
+}
+
+demo.makeGrForTmprss2()
+```
