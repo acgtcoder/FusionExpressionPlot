@@ -1,0 +1,69 @@
+# This file provides utility functions for working with strings.
+
+#' Extract matched named substrings
+#'
+#' Extracts the substrings matched by named capture groups from the provided
+#' match result output from \code{\link[base]{regexpr}} (with \code{perl=
+#' TRUE}). Will return a matrix of strings with one column for each named
+#' capture group and one row for each string in the vector matched against. By
+#' default will return empty strings if match fails, but can be set to return
+#' NAs if desired.
+#'
+#' This is intended for use with \code{\link[base]{regexpr}} to parse a string
+#' and extract substrings via named capture groups, similar to how
+#' \code{\link[base]{regmatches}} is used. If only one string is matched
+#' against, then returned matrix will have one row only.
+#'
+#' Note that regExp with multiple capture groups will need to use greedy and
+#' non-greedy matching carefully if the capture groups are to work correctly and
+#' not interfering with each other or not-capture components of the regExp.
+#'
+#' @param matchResults The results of a match performed using
+#'   \code{\link[base]{regexpr}(regExp, matchText, perl= TRUE)} where
+#'   \code{regExp} has named capture groups like \code{(?<theName>...)}.
+#'
+#' @param matchText The text originally matched against, a vector of strings.
+#'
+#' @param use.na By default returns empty strings for all capture groups if the
+#'   regExp fails to match. That can not be distinguished from a match with all
+#'   capture groups matching nothing, e.g. \code{(?<num>\\d*)}. Setting this
+#'   \code{TRUE} causes a failing match to return all NA values instead.
+#'
+#' @return A matrix with one column for each named capture group (with matching
+#'   column name) and one row for each string in the text vector matched to. The
+#'   value of each cell is the text matched by the named capture group. If any
+#'   capture group does not match, all returned strings are empty for that text
+#'   vector element (row), or \code{NA} if \code{use.na= TRUE}
+#'
+#' @examples
+#' regExp <- "(?<key>.+?)\\s*=\\s*(?<value>.+)"
+#' data <- c('name = Stuart R. Jefferys', 'email=srj@@unc.edu')
+#' matchResults <- regexpr(regExp, data, perl= TRUE)
+#' regexprNamedMatches(matchResults, data)
+#' #=>      key     value
+#' #=> [1,] "name"  "Stuart R. Jefferys"
+#' #=> [2,] "email" "srj@@unc.edu"
+#'
+#' @export
+regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
+
+   captureNames <- attr(matchResults,'capture.names')
+   nrows <- length(matchText)
+   ncols <- length(captureNames)
+   retMat <- matrix(character(nrows*ncols), nrow = nrows, ncol = ncols, dimnames=list(rep(NULL,nrows),captureNames))
+   captureStarts <- attr(matchResults,'capture.start')
+   captureLengths <- captureStarts + attr(matchResults,'capture.length') - 1
+   for (captureName in captureNames) {
+      retMat[,captureName] = substr(matchText,captureStarts[,captureName], captureLengths[,captureName])
+   }
+
+   # Simple but possibly inefficient to just reset values afterwards.
+   if (use.na) {
+      for (row in 1:nrows) {
+         if (matchResults[row] == -1) {
+            retMat[row,] <- rep(NA, ncols)
+         }
+      }
+   }
+   return(retMat)
+}
