@@ -101,6 +101,11 @@ gr[1,]
 
 ### `grToLocationString()` and `grFromLocationString()` - Location strings
 
+One format for describing a sequence of gene locations is a string. To convert
+between a string and a GRanges object requires a specified structure and some
+delimiters. It must be possible to recognize separately the chromosome, the
+exon set, and the strand. The order these are specified can be different, so
+
 
 ```{r}
 demo.makeGrForTmprss2 <- function() {

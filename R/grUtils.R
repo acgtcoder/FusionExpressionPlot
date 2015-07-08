@@ -56,83 +56,74 @@ grAddColumn <- function( gr, name, vec ) {
 # GRanges object functions
 ###
 
-#' Add a category column to a GRange object
+#' Convert a genomic elements string into an GRanges object.
 #'
-#' Adds a column of labels as metadata to a GRanges object, mapped from an
-#' existing column of numeric metadata. Which column to map can be specified by
-#' column name or index. The data from that column will be binned based on the
-#' given binEnds and the matching bin label will be used. By default assumes you
-#' are assinging a color map using a colorBrewere pallete, but any category
-#' labels can be used. To add a category column based on an external vector,
-#' just use sortDataIntoBins and grAddColumn.
+#' Parses a string into a sequence of genomic elements, adding specified
+#' chromosome and strand. Each genomic elements is assumed to be two genomic
+#' positions separated by a delimiter (-), with the low position first and the
+#' high position second, in 1 based coordinates. The sequence of elements are
+#' separated by a delimiter (,). All elements must be on the same sequence block
+#' (chromosome) and must be on the same strand (by default '*' for unspecified).
+#' Positions are given as if on the positive strand, actual positions would be
+#' reversed if on the negative strand. Whitespace around delimiters is ignored.
+#' If alternate delimiters that are whitespace are used, then they must be
+#' present but additional whitespace is ignored.
 #'
-#' @section Color Brewer Palletes:
+#' @param elementString The string to parse into genomic ranges.
+#' @param chr The chromosome for the genomic ranges.
+#' @param strand The strand for the chromosome, must be '*', '+' or '-'.
+#'   Defaults to '*' if not specified.
+#' @param seqDelim The sequence delimiter, usually use the default '\\s*,\\s*'. Can be
+#'   any reqular expression.
+#' @param posDelim The start-end position separator, usually use the default
+#'   '\\s*-\\s*'. Can be any regular expression.
 #'
-#'   If no labels are specified, a vector of colors will be assigned using the
-#'   brewer palette named (RdBu if none specified). The number of colors needed
-#'   will be determined automatically from the binEnds provided. To use
-#'   different colors, just specify them manually as bin labels. Doing so is no
-#'   different than assigning any lables, colors or otherwise. The color brewer
-#'   palette is just a convienient shortcut and is ignored if labels are given.
-#'   If no version of the given palette has the number of levels required by the
-#'   bin ends an error will occur.
-#'
-#'   For diverging values, can have 3 - 11 bins, allowed values are
-#'
-#'   BrBG PiYG PRGn PuOr RdBu RdGy RdYlBu RdYlGn Spectral.
-#'
-#'   For sequential values, can have 3 - 8 value, allowed values are:
-#'
-#'   Blues BuGn BuPu GnBu Greens Greys Oranges OrRd PuBu PuBuGn PuRd Purples
-#'   RdPu Reds YlGn YlGnBu YlOrBr YlOrRd.
-#'
-#'   For qualitative palletes, can have 3 to (n) where n varies by palette:
-#'
-#'   Accent (8), Dark2 (8), Paired (12), Pastel1 (9), Pastel2 (8), Set1 (9),
-#'   Set2 (8), Set3 (12)
-#'
-#' @examples
-#' # Display available palletes.
-#' library(RColorBrewer);
-#' display.brewer.all()
-#'
-#' @param gr The GRanges object to annotate.
-#'
-#' @param column The metadata column in the GRange object to determine labels
-#' from. Can specify the column by name or by (metadata) column index.
-#'  map. Defaults to 1.
-#'
-#' @param binEnds The sequence of cut-points defining the bins into which the
-#'   data will be split. Each bin will correspond to a label in the provided
-#'   labels vector or color palette, providing a mapping of each value to a
-#'   label or color. Values exactly matching bin ends will be in the lower bin.
-#'   NAs or values outside the range will map to NAs. Normally the first and
-#'   last bin ends are the special values Inf and -Inf. Note: bin ends will be
-#'   sorted from smallest to largest before mapping, so make sure lables are
-#'   ordered to match
-#'
-#' @param brewerPaletteName The name of the RColorBrewer palatte to use for bin
-#' labels, by default 'RdBu'. Setting labels causes this to be ignored.
-#'
-#' @param labels The vector of labels to use as bin names. The number of colors will
-#' have to be one less than the number of bin ends. If specified, brewerPaletteName is ignored
-#'
-#' @param as.column The name of the metadata column added to the GRanges object.
-#'
-#' @return the GRanges object with the new column added, or if annotate is set
-#'   FALSE, just the label (color) vector.
+#' @return A GRanges object based on the input elements.
 #'
 #' @export
-grLabelMap <- function(
-   gr, binEnds, column=1, brewerPaletteName= 'RdBu',
-   labels= rev(brewer.pal( length(binEnds) - 1, brewerPaletteName)),
-   as.column = 'exonColor', annotate=TRUE
+grFromElementString <- function(
+   elementString, chr, strand='*',
+   seqDelim='\\s*,\\s*', posDelim='\\s*-\\s*'
 ) {
-   colorCol <- sortDataIntoBins(elementMetadata(gr)[[column]],binEnds,colors);
-   if (annotate) {
-      return(grAddColumn(gr, as.column, colorCol));
-   }
-   else {
-      return(colorCol);
-   }
+   elements <- strsplit(elementString, seqDelim)[[1]]
+   starts = as.numeric(sapply( sapply( elements,function(x) strsplit(x, posDelim)), "[[", 1))
+   ends = as.numeric(sapply( sapply(elements, function(x) strsplit(x, posDelim)), "[[", 2))
+   gr <- grNew( start=starts, end=ends, chr=chr,strand=strand)
+   return(gr)
+}
+
+#' Convert a genomic location string into a GRange object.
+#'
+#' Given a genomic location string, converts it to a GRanges object. The
+#' location string is parsed based on a regular expression with up to three
+#' capture groups, capturing the chromosome, the strand, and the element
+#' location sub-strings. The element string is then parsed into a sequence of
+#' start and stop ranges, and the this data is used to create and return a
+#' GRange object. The regexp used to match with must contain at least three
+#' named capture groups: \code{(?<chr>..)}, \code{(?<elements>...)}, and
+#' \code{(?<strand>..)}. Matching is done using \code{perl=TRUE}).
+#'
+#' The default location string parsed is assumed to look something like:
+#' \preformatted{    "chr1:1-100,200-300,400-500:-"}
+#'
+#' White-space is ignored around the delimiters ':', ',', and '-'.
+#'
+#' @param locationString The string to parse into a GRange object
+#'
+#' @param captureRE The regular expression used to extract the substrings for
+#' the chromosome (chr), the element list (elements), and strand (strand).
+#'
+#' @return A GRange object corresponding to the location string.
+#'
+#' @export
+grFromLocationString <- function(
+   locationString, captureRE='(?<chr>.*?)\\s*:\\s*(?<elements>.*?)\\s*:\\s*(?<strand>[-+*]?)'
+) {
+   matchResults <- regexpr(captureRE, locationString, perl= TRUE)
+   parsed <- regexprNamedMatches(matchResults, locationString)
+   gr <- grFromElementString( parsed[1,'elements'],
+                            chr=    parsed[1,'chr'],
+                            strand= parsed[1, 'strand']
+   )
+   return(gr)
 }
