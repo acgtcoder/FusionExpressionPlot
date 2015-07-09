@@ -134,3 +134,30 @@ test_that( 'grFromLocationString; creates correct gr with new regexp?', {
    want <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chrM_rcs', strand = '+');
    expect_equal(got,want);
 })
+
+describe("grToElementString()", {
+   it("it outputs a string describing all segments of the GRanges object", {
+
+   })
+   it("it dies if the GRanges object has more than one chromosome", {
+
+   })
+   it("it dies if the GRanges object has more than one strand", {
+
+   })
+   it("it returns empty if the GRanges object has no elements", {
+
+   })
+   it("outputs each range as two end positions, inclusive, separated by a '-'", {
+
+   })
+   it("allows range end delimiter to be specified, including blanks", {
+
+   })
+   it("outputs ranges separated by a ','", {
+
+   })
+   it("allows the range separation delimiter to be specified, including blanks", {
+
+   })
+})
