@@ -8,6 +8,7 @@
 #' Defaults to '*' if strand is not specified. Coordinates are given as if the
 #' exons were on the positive strand, in 1-based coordinates. This will be
 #' backawards from the actual sequence if the gene is on the negative strand.
+#' Ranges will be sorted by start and then by end.
 #'
 #' @param start A vector giving the starting (lower) genomic coordinates of the
 #'   exons. Must be specified.
@@ -27,7 +28,7 @@ grNew <- function( start, end, chr, strand= '*' ) {
       seqnames= chr,
       strand= strand
    );
-   return(gr)
+   return(sort(gr))
 }
 
 #' Add a data column to a GRanges object.
@@ -58,38 +59,108 @@ grAddColumn <- function( gr, name, vec ) {
 
 #' Convert a genomic elements string into an GRanges object.
 #'
-#' Parses a string into a sequence of genomic elements, adding specified
-#' chromosome and strand. Each genomic elements is assumed to be two genomic
-#' positions separated by a delimiter (-), with the low position first and the
-#' high position second, in 1 based coordinates. The sequence of elements are
-#' separated by a delimiter (,). All elements must be on the same sequence block
+#' Parses a genomic elements string into ranges, then adds a specified
+#' chromosome and strand and returns a GRanges object. The elements string parsed
+#' by default looks like:
+#' \preformatted{    "1-100,3-500,2-3" }
+#'
+#' Spaces around the between delimiter ',' and the from delimiter '-' are ignored;
+#' other delimiters (regular expressions) can be specified.  All elements must be on the same sequence block
 #' (chromosome) and must be on the same strand (by default '*' for unspecified).
-#' Positions are given as if on the positive strand, actual positions would be
-#' reversed if on the negative strand. Whitespace around delimiters is ignored.
-#' If alternate delimiters that are whitespace are used, then they must be
-#' present but additional whitespace is ignored.
+
+#' Positions are given in 1 based coordinates as if on the positive strand with the low position first and the
+#' high position second. Actual positions would be
+#' reversed if on the negative strand.
 #'
 #' @param elementString The string to parse into genomic ranges.
 #' @param chr The chromosome for the genomic ranges.
 #' @param strand The strand for the chromosome, must be '*', '+' or '-'.
 #'   Defaults to '*' if not specified.
-#' @param seqDelim The sequence delimiter, usually use the default '\\s*,\\s*'. Can be
-#'   any reqular expression.
-#' @param posDelim The start-end position separator, usually use the default
+#' @param betweenDelim The sequence delimiter, usually use the default '\\s*,\\s*'. Can be
+#'   any regular expression.
+#' @param fromDelim The start-end position separator, usually use the default
 #'   '\\s*-\\s*'. Can be any regular expression.
 #'
-#' @return A GRanges object based on the input elements.
+#' @return A GRanges object based on the input elements, with ranges sorted by start and then
+#' end position
 #'
 #' @export
 grFromElementString <- function(
    elementString, chr, strand='*',
-   seqDelim='\\s*,\\s*', posDelim='\\s*-\\s*'
+   betweenDelim='\\s*,\\s*', fromDelim='\\s*-\\s*'
 ) {
-   elements <- strsplit(elementString, seqDelim)[[1]]
-   starts = as.numeric(sapply( sapply( elements,function(x) strsplit(x, posDelim)), "[[", 1))
-   ends = as.numeric(sapply( sapply(elements, function(x) strsplit(x, posDelim)), "[[", 2))
+   elements <- strsplit(elementString, betweenDelim)[[1]]
+   starts = as.numeric(sapply( sapply( elements,function(x) strsplit(x, fromDelim)), "[[", 1))
+   ends = as.numeric(sapply( sapply(elements, function(x) strsplit(x, fromDelim)), "[[", 2))
    gr <- grNew( start=starts, end=ends, chr=chr,strand=strand)
-   return(gr)
+   return(sort(gr))
+}
+
+.grGetChr <- function( gr ) {
+   chrFactor <- unique(seqnames(gr))
+   if (length(chrFactor) > 1) {
+      stop("GRange object has more than one chromosome.")
+   } else if (length(chrFactor) == 0) {
+      return('')
+   } else {
+      return(as.character(chrFactor[1]))
+   }
+}
+
+.grGetStrand <- function( gr ) {
+   strandFactor <- unique(strand(gr))
+   if (length(strandFactor) > 1) {
+      stop("GRange object has more than one strand.")
+   } else if (length(strandFactor) == 0) {
+      return('')
+   } else {
+      return(as.character(strandFactor[1]))
+   }
+}
+
+#' Extract an element string from a GRange object
+#'
+#' Returns a string representation of the ranges in a GRange object if they are
+#' on only one chromosome of one strand. The two ends of each range are
+#' separated by a '-' by default but any string can be specified for this 'from'
+#' delimiter. Additionally, each range element is separated by a ',' by default,
+#' but any string can be specified for this 'between' delimiter. If there are no
+#' ranges in the GRange object, then an empty string is returned.
+#'
+#' It is an error to try and generate an element string from a GRanges object
+#' representing ranges on more than one chromosome or on more than one strand.
+#'
+#' This is the reciprocal of /code{/link{grFromElementString}}.
+#'
+#' @examples
+#' gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chr1', strand='-')
+#' grToElementString(gr)
+#' #=> [1] "1-100,200-300,400-500"
+#' grToElementString(gr, fromDelim=' to ', betweenDelim='; ')
+#' #=> [1] "1 to 100; 200 to 300; 400 to 500"
+#' gr1 <- grFromElementString(grToElementString(gr), chr='ANY')
+#' grToElementString(gr1) == grToElementString(gr)
+#' #=> [1] TRUE
+#'
+#' @param gr The GRange object to extract an element string from.
+#'
+#' @param fromDelim The string to print between the start and end position of a range. Defaults to '-'
+#'
+#' @param betweenDelim The string to print between the range elements. Defaults to ','
+#'
+#' @return A string equivalent of the ranges in the GRange object provided.
+#'
+#' @export
+grToElementString <- function( gr, fromDelim='-', betweenDelim=',' ) {
+   # These called only for error handling
+   .grGetChr(gr)
+   .grGetStrand(gr)
+   if (length(gr) == 0) {
+      return('')
+   }
+   starts <- start(gr)
+   ends <- end(gr)
+   return( paste( starts, ends, sep=fromDelim, collapse=betweenDelim ));
 }
 
 #' Convert a genomic location string into a GRange object.
@@ -113,17 +184,23 @@ grFromElementString <- function(
 #' @param captureRE The regular expression used to extract the substrings for
 #' the chromosome (chr), the element list (elements), and strand (strand).
 #'
+#' @param ... Allows passing alternate fromDelim and betweenDelim regular
+#' expressions through to grFromElementString, which parses the element part of
+#' the locationstring
+#'
 #' @return A GRange object corresponding to the location string.
 #'
 #' @export
 grFromLocationString <- function(
-   locationString, captureRE='(?<chr>.*?)\\s*:\\s*(?<elements>.*?)\\s*:\\s*(?<strand>[-+*]?)'
+   locationString, captureRE='(?<chr>.*?)\\s*:\\s*(?<elements>.*?)\\s*:\\s*(?<strand>[-+*]?)',
+   ...
 ) {
    matchResults <- regexpr(captureRE, locationString, perl= TRUE)
    parsed <- regexprNamedMatches(matchResults, locationString)
    gr <- grFromElementString( parsed[1,'elements'],
                             chr=    parsed[1,'chr'],
-                            strand= parsed[1, 'strand']
+                            strand= parsed[1, 'strand'],
+                            ...
    )
    return(gr)
 }

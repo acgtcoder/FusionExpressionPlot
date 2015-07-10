@@ -5,13 +5,18 @@
 \title{Convert a genomic location string into a GRange object.}
 \usage{
 grFromLocationString(locationString,
-  captureRE = "(?<chr>.*?)\\\\s*:\\\\s*(?<elements>.*?)\\\\s*:\\\\s*(?<strand>[-+*]?)")
+  captureRE = "(?<chr>.*?)\\\\s*:\\\\s*(?<elements>.*?)\\\\s*:\\\\s*(?<strand>[-+*]?)",
+  ...)
 }
 \arguments{
 \item{locationString}{The string to parse into a GRange object}
 
 \item{captureRE}{The regular expression used to extract the substrings for
 the chromosome (chr), the element list (elements), and strand (strand).}
+
+\item{...}{Allows passing alternate fromDelim and betweenDelim regular
+expressions through to grFromElementString, which parses the element part of
+the locationstring}
 }
 \value{
 A GRange object corresponding to the location string.

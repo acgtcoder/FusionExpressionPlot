@@ -101,10 +101,15 @@ gr[1,]
 
 ### `grToLocationString()` and `grFromLocationString()` - Location strings
 
-One format for describing a sequence of gene locations is a string. To convert
-between a string and a GRanges object requires a specified structure and some
-delimiters. It must be possible to recognize separately the chromosome, the
-exon set, and the strand. The order these are specified can be different, so
+One format for describing a sequence of gene locations is a string. To convert 
+between a string and a GRanges object requires a specified structure and some 
+delimiters. It must be possible to recognize separately the chromosome, the exon
+set, and the strand. The order these are specified in can be different.
+
+Location strings are parsed by grFromLocationString. To read in a location
+string a regular expression with named capture groups is used. The default
+captureRE will parse a colon-delimited string that looks like
+`chr1:23-2343,2343-234324:+`, possibly including additional blanks.
 
 
 ```{r}

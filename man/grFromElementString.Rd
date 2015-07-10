@@ -5,7 +5,7 @@
 \title{Convert a genomic elements string into an GRanges object.}
 \usage{
 grFromElementString(elementString, chr, strand = "*",
-  seqDelim = "\\\\s*,\\\\s*", posDelim = "\\\\s*-\\\\s*")
+  betweenDelim = "\\\\s*,\\\\s*", fromDelim = "\\\\s*-\\\\s*")
 }
 \arguments{
 \item{elementString}{The string to parse into genomic ranges.}
@@ -15,25 +15,28 @@ grFromElementString(elementString, chr, strand = "*",
 \item{strand}{The strand for the chromosome, must be '*', '+' or '-'.
 Defaults to '*' if not specified.}
 
-\item{seqDelim}{The sequence delimiter, usually use the default '\\s*,\\s*'. Can be
-any reqular expression.}
+\item{betweenDelim}{The sequence delimiter, usually use the default '\\s*,\\s*'. Can be
+any regular expression.}
 
-\item{posDelim}{The start-end position separator, usually use the default
+\item{fromDelim}{The start-end position separator, usually use the default
   '\\s*-\\s*'. Can be any regular expression.}
 }
 \value{
-A GRanges object based on the input elements.
+A GRanges object based on the input elements, with ranges sorted by start and then
+end position
 }
 \description{
-Parses a string into a sequence of genomic elements, adding specified
-chromosome and strand. Each genomic elements is assumed to be two genomic
-positions separated by a delimiter (-), with the low position first and the
-high position second, in 1 based coordinates. The sequence of elements are
-separated by a delimiter (,). All elements must be on the same sequence block
+Parses a genomic elements string into ranges, then adds a specified
+chromosome and strand and returns a GRanges object. The elements string parsed
+by default looks like:
+\preformatted{    "1-100,3-500,2-3" }
+}
+\details{
+Spaces around the between delimiter ',' and the from delimiter '-' are ignored;
+other delimiters (regular expressions) can be specified.  All elements must be on the same sequence block
 (chromosome) and must be on the same strand (by default '*' for unspecified).
-Positions are given as if on the positive strand, actual positions would be
-reversed if on the negative strand. Whitespace around delimiters is ignored.
-If alternate delimiters that are whitespace are used, then they must be
-present but additional whitespace is ignored.
+Positions are given in 1 based coordinates as if on the positive strand with the low position first and the
+high position second. Actual positions would be
+reversed if on the negative strand.
 }
 

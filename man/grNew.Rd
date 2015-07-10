@@ -28,5 +28,6 @@ one chromosome. This could be a gene, a transcript, or one side of a fusion.
 Defaults to '*' if strand is not specified. Coordinates are given as if the
 exons were on the positive strand, in 1-based coordinates. This will be
 backawards from the actual sequence if the gene is on the negative strand.
+Ranges will be sorted by start and then by end.
 }
 
