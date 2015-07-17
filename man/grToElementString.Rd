@@ -2,7 +2,7 @@
 % Please edit documentation in R/grUtils.R
 \name{grToElementString}
 \alias{grToElementString}
-\title{Extract an element string from a GRange object}
+\title{Extract a genomic element string from a GRange object}
 \usage{
 grToElementString(gr, fromDelim = "-", betweenDelim = ",")
 }
@@ -28,7 +28,7 @@ ranges in the GRange object, then an empty string is returned.
 It is an error to try and generate an element string from a GRanges object
 representing ranges on more than one chromosome or on more than one strand.
 
-This is the reciprocal of /code{/link{grFromElementString}}.
+This is the reciprocal of \code{\link{grFromElementString}}.
 }
 \examples{
 gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chr1', strand='-')

@@ -57,7 +57,7 @@ grAddColumn <- function( gr, name, vec ) {
 # GRanges object functions
 ###
 
-#' Convert a genomic elements string into an GRanges object.
+#' Convert a genomic element string into an GRanges object.
 #'
 #' Parses a genomic elements string into ranges, then adds a specified
 #' chromosome and strand and returns a GRanges object. The elements string parsed
@@ -118,7 +118,7 @@ grFromElementString <- function(
    }
 }
 
-#' Extract an element string from a GRange object
+#' Extract a genomic element string from a GRange object
 #'
 #' Returns a string representation of the ranges in a GRange object if they are
 #' on only one chromosome of one strand. The two ends of each range are
@@ -130,7 +130,7 @@ grFromElementString <- function(
 #' It is an error to try and generate an element string from a GRanges object
 #' representing ranges on more than one chromosome or on more than one strand.
 #'
-#' This is the reciprocal of /code{/link{grFromElementString}}.
+#' This is the reciprocal of \code{\link{grFromElementString}}.
 #'
 #' @examples
 #' gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chr1', strand='-')
@@ -203,4 +203,53 @@ grFromLocationString <- function(
                             ...
    )
    return(gr)
+}
+
+#' Extract a genomic location string from a GRange object
+#'
+#' Returns a string representation of a GRange object if it contains only ranges
+#' on just one chromosome and on just one strand. The string returned is
+#' specified using the format characters \{\{c\}\} for the chromosme, \{\{S\}\}
+#' for the strand and \{\{e\}\} for the element string (formatted as with
+#' grToElementString()). The default format returned is
+#' "\{\{c\}\}:\{\{e\}\}:\{\{s\}\}"
+#'
+#' It is an error to try and generate a location string from a GRanges object
+#' representing ranges on more than one chromosome or on more than one strand.
+#'
+#' This is the reciprocal of /code{/link{grFromLocationString}}.
+#'
+#' @examples
+#' gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chr1', strand='-')
+#' grToLocationString(gr)
+#' #=> [1] "chr1:1-100,200-300,400-500:-"
+#' grToLocationString(gr, format="{{c}}({{s}}){{e}}")
+#' #=> [1] "chr1(-)1-100,200-300,400-500"
+#' grToLocationString(gr, format="On {{c}}: {{e}}.", fromDelim=' to ', betweenDelim=', ')
+#' #=> [1] "On chr1: 1 to 100, 200 to 300, 400 to 500."
+#' gr1 <- grFromLocationString(grToLocationString(gr))
+#' grToLocationString(gr1) == grToLocationString(gr)
+#' #=> [1] TRUE
+#'
+#' @param gr The GRange object to extract a location string from.
+#'
+#' @param format The string to print, translating \{\{e\}\} to an element
+#'   location string, \{\{c\}\} as the chromosme, \{\{s\}\} as the strand.
+#'   Defaults to "\{\{c\}\}:\{\{e\}\}:\{\{s\}\}",
+#'
+#' @param ... Allows passing parameters to the \code{\link{grToElementString}}
+#'   used to generate the elements string.
+#'
+#' @return A string equivalent to the GRange object provided, formatted as
+#'   specified.
+#'
+#' @export
+grToLocationString <- function( gr, format= '{{c}}:{{e}}:{{s}}', ... ) {
+   if (length(gr) == 0) {
+      return('')
+   }
+   c <- .grGetChr(gr)
+   s <- .grGetStrand(gr)
+   e <- grToElementString( gr, ... )
+   return( templateFill(format) )
 }

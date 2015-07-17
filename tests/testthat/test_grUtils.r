@@ -207,51 +207,51 @@ describe("grToLocationString()", {
       got <- grToLocationString( gr )
       expect_equal(got, want)
    })
-   it("prints the chr string in place of the %c format string element", {
+   it("prints the chr string in place of the {{c}} format string element", {
       gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chrM_rcs', strand = '+');
-      expect_equal( grToLocationString( gr, format="%c" ), 'chrM_rcs')
-      expect_equal( grToLocationString( gr, format="Before %c" ), 'Before chrM_rcs')
-      expect_equal( grToLocationString( gr, format="Before%c" ), 'BeforechrM_rcs')
-      expect_equal( grToLocationString( gr, format="%c After" ), 'chrM_rcs After')
-      expect_equal( grToLocationString( gr, format="%cAfter" ), 'chrM_rcsAfter')
-      expect_equal( grToLocationString( gr, format="In %c side" ), 'In chrM_rcs side')
-      expect_equal( grToLocationString( gr, format="In%cside" ), 'InchrM_rcsside')
+      expect_equal( grToLocationString( gr, format="{{c}}" ), 'chrM_rcs')
+      expect_equal( grToLocationString( gr, format="Before {{c}}" ), 'Before chrM_rcs')
+      expect_equal( grToLocationString( gr, format="Before{{c}}" ), 'BeforechrM_rcs')
+      expect_equal( grToLocationString( gr, format="{{c}} After" ), 'chrM_rcs After')
+      expect_equal( grToLocationString( gr, format="{{c}}After" ), 'chrM_rcsAfter')
+      expect_equal( grToLocationString( gr, format="In {{c}} side" ), 'In chrM_rcs side')
+      expect_equal( grToLocationString( gr, format="In{{c}}side" ), 'InchrM_rcsside')
    })
-   it("prints the strand string in place of the %s format string element", {
+   it("prints the strand string in place of the {{s}} format string element", {
       gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chrM_rcs', strand = '+');
-      expect_equal( grToLocationString( gr, format="%s" ), '+')
-      expect_equal( grToLocationString( gr, format="Before %s" ), 'Before +')
-      expect_equal( grToLocationString( gr, format="Before%s" ), 'Before+')
-      expect_equal( grToLocationString( gr, format="%s After" ), '+ After')
-      expect_equal( grToLocationString( gr, format="%sAfter" ), '+After')
-      expect_equal( grToLocationString( gr, format="In %s side" ), 'In + side')
-      expect_equal( grToLocationString( gr, format="In%sside" ), 'In+side')
+      expect_equal( grToLocationString( gr, format="{{s}}" ), '+')
+      expect_equal( grToLocationString( gr, format="Before {{s}}" ), 'Before +')
+      expect_equal( grToLocationString( gr, format="Before{{s}}" ), 'Before+')
+      expect_equal( grToLocationString( gr, format="{{s}} After" ), '+ After')
+      expect_equal( grToLocationString( gr, format="{{s}}After" ), '+After')
+      expect_equal( grToLocationString( gr, format="In {{s}} side" ), 'In + side')
+      expect_equal( grToLocationString( gr, format="In{{s}}side" ), 'In+side')
    })
-   it("prints the element string in place of the %e format string element", {
+   it("prints the element string in place of the {{e}} format string element", {
       gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chrM_rcs', strand = '+');
-      expect_equal( grToLocationString( gr, format="%e" ), '1-100,200-300,400-500')
-      expect_equal( grToLocationString( gr, format="Before %e" ), 'Before 1-100,200-300,400-500')
-      expect_equal( grToLocationString( gr, format="Before%e" ), 'Before1-100,200-300,400-500')
-      expect_equal( grToLocationString( gr, format="%e After" ), '1-100,200-300,400-500 After')
-      expect_equal( grToLocationString( gr, format="%eAfter" ), '1-100,200-300,400-500After')
-      expect_equal( grToLocationString( gr, format="In %e side" ), 'In 1-100,200-300,400-500 side')
-      expect_equal( grToLocationString( gr, format="In%eside" ), 'In1-100,200-300,400-500side')
+      expect_equal( grToLocationString( gr, format="{{e}}" ), '1-100,200-300,400-500')
+      expect_equal( grToLocationString( gr, format="Before {{e}}" ), 'Before 1-100,200-300,400-500')
+      expect_equal( grToLocationString( gr, format="Before{{e}}" ), 'Before1-100,200-300,400-500')
+      expect_equal( grToLocationString( gr, format="{{e}} After" ), '1-100,200-300,400-500 After')
+      expect_equal( grToLocationString( gr, format="{{e}}After" ), '1-100,200-300,400-500After')
+      expect_equal( grToLocationString( gr, format="In {{e}} side" ), 'In 1-100,200-300,400-500 side')
+      expect_equal( grToLocationString( gr, format="In{{e}}side" ), 'In1-100,200-300,400-500side')
    })
    it("allows using multiple format strings", {
       gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chrM_rcs', strand = '-');
-      expect_equal( grToLocationString( gr, format="%ch(%s)%e" ), 'chrM_rcs(-)1-100,200-300,400-500')
+      expect_equal( grToLocationString( gr, format="{{c}}({{s}}){{e}}" ), 'chrM_rcs(-)1-100,200-300,400-500')
 
    })
    it("allows passing through the betweenDelim and the fromDelem to grToElementString", {
       gr <- grNew( start=c(1,200,400), end=c(100,300,500), chr='chrM_rcs', strand = '+')
-      got <- grToLocationString( gr, format="%e", fromDelim='.', betweenDelim = '|' )
+      got <- grToLocationString( gr, format="{{e}}", fromDelim='.', betweenDelim = '|' )
       want <- '1.100|200.300|400.500'
       expect_equal(  got, want )
       got <- grToLocationString( gr, fromDelim='.', betweenDelim = '|' )
       want <- 'chrM_rcs:1.100|200.300|400.500:+'
       expect_equal(  got, want )
-      got <- grToLocationString( gr, format="Ranges %e on %c, %s strand.", fromDelim=' to ', betweenDelim = ' & ' )
-      want <- 'Ranges 1 to 100 & 200 to 300 & 400 to 500 on chrM_rcs, + strand'
+      got <- grToLocationString( gr, format="Ranges {{e}} on {{c}}, {{s}} strand.", fromDelim=' to ', betweenDelim = ' & ' )
+      want <- 'Ranges 1 to 100 & 200 to 300 & 400 to 500 on chrM_rcs, + strand.'
       expect_equal(  got, want )
    })
 })

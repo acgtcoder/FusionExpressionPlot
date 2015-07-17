@@ -67,3 +67,133 @@ regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
    }
    return(retMat)
 }
+
+#' Evaluate and fill string templates
+#'
+#' Given a vector of strings containing {{variables}} and returns a copy
+#' replacing the templated fields with the value of the specified variables.
+#' Variables must be defined in the calling environment (or the one passed in),
+#' or an error will occur. If as.R is set TRUE, then any {{R code}} can be used
+#' and it will be evaluated to obtain a return value. That is, of course,
+#' dangerous if you don't trust the source of your template. This code is
+#' executed as if run in new function called in the current environment (or the
+#' one passed in).
+#'
+#' @param x Vector of strings with fields containing variables or code to be
+#'   interpolated.
+#'
+#' @param openDelim The string used to signal the start of a variable or R code
+#'   expression. By default uses "\{\{"
+#'
+#' @param closeDelim The string used to signal the close of a varaible or R code
+#'   expression. By default uses "\}\}"
+#'
+#' @param as.R Set TRUE to allow full R code evaluation. By default is FALSE and
+#'   only allows variable substitution. Setting this true is a security risk
+#'   when you don't trust the provider of the template text as much as you trust
+#'   the person who provided your R code, so it generates a warning.
+#'
+#' @param env The execution environment to be used. Can be used to pass in the
+#'   an environment in which variables are defined for use in interpolation. If
+#'   not specified, then by default this will be that of the callers,
+#'   parent.frame(). Variables visible in the calling function (or set there)
+#'   will be avialble for use in the template. Note that although R code will
+#'   normally only set or change variables in this frame when evaluated, it
+#'   can set or change variables at any level, hence it can not be ensured
+#'   that as.R evaluated templates won't leak or interfere with other R
+#'   variables in your code (or indeed in any other package or even system code).
+#'   With great power comes great responsibility.
+#'
+#' @return A copy of the original vector of strings, but with variable names
+#'   replaced with their values, or with the result of evaluating the
+#'   interpolated string as R code.
+#'
+#' @export
+templateFill <- function( x,
+                          openDelim = '{{', closeDelim = '}}',
+                          as.R = FALSE, env = parent.frame()
+) {
+   if (as.R) {
+      warning( "Potential security risk:",
+               " templateFill() is evaluating user-provided R code",
+               " If you trust where the input text 'x' is coming from,",
+               " you can suppress this message with suppressWarnings().")
+   }
+
+   # Find delimiter positions
+   starts <- gregexpr(openDelim, x, fixed= TRUE)
+   ends <- gregexpr(closeDelim, x, fixed= TRUE)
+
+   # Pre-allocate the returned vector of strings
+   retVal <- character(length(x))
+
+   # Process each string in the input vector (possibly 0)
+   for (stringNum in 1:length(x)) {
+      # Any string without BOTH delimiters is just returned as is
+      if (starts[[stringNum]] == -1 || ends[[stringNum]] == -1) {
+         retVal[stringNum] <- x[stringNum]
+         next
+      }
+      # If any string has both delimiters, but has a mismatched number of open
+      # and closed delimiters, fail for the whole thing.
+      if (length(starts[[stringNum]]) > length(ends[[stringNum]])) {
+         stop("Too many ", openDelim, " found in template text element ", stringNum, ".",
+              " Probably missing one or more ", closeDelim)
+      }
+      else if (length(starts[[stringNum]]) < length(ends[[stringNum]])) {
+         stop("Too many ", closeDelim, " found in template text element ", stringNum, ".",
+              " Probably missing one or more ", openDelim)
+      }
+      # Have equal number of paired delimiters, so ready to start. Haven't
+      # verified delimiter come in correct order, that will be done as we
+      # process them in pairs.
+
+      # Split this string into pieces at each delimiter (begin AND and). Some
+      # string pieces may be 0 if the string begins and/or ends with a delimiter
+      pieces <- character(2 * length(starts[[stringNum]]) + 1)
+
+      # First piece is string up to first open deliminter
+      pieces[1] <- substr(x[stringNum], 1, starts[[stringNum]][1]-1)
+
+      # Remianng pieces come in pairs: between open and close delimiter (the
+      # text to process as a template), and, except for the last close delimiter,
+      # the part between the close delimiter and the next close delimiter.
+      for (fieldNum in 1:length(starts[[stringNum]])) {
+         # This pair of delimiters comes in the correct order, or die.
+         if (starts[[stringNum]][fieldNum] > ends[[stringNum]][fieldNum]) {
+            stop(closeDelim, " before ", openDelim, " in string", stringNum, " at ", ends[[stringNum]][1], ".")
+         }
+         # This is not the last pair of delimiters, so check for nexted delimiters
+         # (the *next* start can't come before this open delimiter's paired close)
+         if (length(starts[[stringNum]]) > fieldNum) {
+            if (starts[[stringNum]][fieldNum + 1] < ends[[stringNum]][fieldNum]) {
+               stop("Nested delimiters not allowed: ", openDelim, " occurs again before ", closeDelim, " in string", stringNum, " at ", ends[[stringNum]][fieldNum], ".")
+            }
+         }
+         # Yay, we finally have a guaranteed good delimiter pair. Get the contents
+         # of the string between these delimiters (the template text) as "field"
+         fieldStart <- starts[[stringNum]][fieldNum] + attr(starts[[stringNum]], 'match.length')[fieldNum]
+         fieldEnd <- ends[[stringNum]][fieldNum] - 1
+         field <- substr(x[stringNum], fieldStart, fieldEnd)
+
+         if (as.R) {
+            # Evalute template text as R code
+            pieces[2*fieldNum] <- eval(parse(x=field), envir= env)
+         }
+         else {
+            # Evaluate template text as a variable name
+            pieces[2*fieldNum] <- get(field, envir= env, inherits=TRUE)
+         }
+         nonfieldStart <- ends[[stringNum]][fieldNum] + attr(ends[[stringNum]], 'match.length')[fieldNum]
+         if (length(starts[[stringNum]]) > fieldNum) {
+            nonfieldEnd <- starts[[stringNum]][fieldNum+1] - 1
+         }
+         else {
+            nonfieldEnd <- nchar(x[stringNum])
+         }
+         pieces[2*fieldNum + 1] <- substr(x[stringNum], nonfieldStart, nonfieldEnd)
+      }
+      retVal[stringNum] <- paste0( pieces, collapse="")
+   }
+   return(retVal)
+}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/grUtils.R
 \name{grFromElementString}
 \alias{grFromElementString}
-\title{Convert a genomic elements string into an GRanges object.}
+\title{Convert a genomic element string into an GRanges object.}
 \usage{
 grFromElementString(elementString, chr, strand = "*",
   betweenDelim = "\\\\s*,\\\\s*", fromDelim = "\\\\s*-\\\\s*")
