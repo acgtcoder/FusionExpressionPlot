@@ -95,14 +95,14 @@ regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
 #'
 #' @param env The execution environment to be used. Can be used to pass in the
 #'   an environment in which variables are defined for use in interpolation. If
-#'   not specified, then by default this will be that of the callers,
-#'   parent.frame(). Variables visible in the calling function (or set there)
-#'   will be avialble for use in the template. Note that although R code will
-#'   normally only set or change variables in this frame when evaluated, it
-#'   can set or change variables at any level, hence it can not be ensured
-#'   that as.R evaluated templates won't leak or interfere with other R
-#'   variables in your code (or indeed in any other package or even system code).
-#'   With great power comes great responsibility.
+#'   not specified, then by default this will be a new environment whose parent
+#'   is the callers environment, as returned by parent.frame(). Variables
+#'   visible in the calling function (or set there) will be avialble for use in
+#'   the template. Note that although R code will normally only set or change
+#'   variables in this frame when evaluated, it can set or change variables at
+#'   any level, hence malicous or careless as.R evaluated templates can leak or
+#'   interfere with other R variables in your code (or indeed in any other
+#'   package or even system code). With great power comes great responsibility.
 #'
 #' @return A copy of the original vector of strings, but with variable names
 #'   replaced with their values, or with the result of evaluating the
@@ -111,7 +111,7 @@ regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
 #' @export
 templateFill <- function( x,
                           openDelim = '{{', closeDelim = '}}',
-                          as.R = FALSE, env = parent.frame()
+                          as.R = FALSE, env = new.env( parent= parent.frame() )
 ) {
    if (as.R) {
       warning( "Potential security risk:",

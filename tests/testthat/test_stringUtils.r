@@ -74,3 +74,49 @@ describe( 'regexprNamedMatches()', {
       expect_equal(got, want)
    })
 })
+
+describe( "templateFill() when as.R is FALSE", {
+   it("Fills single variable mustache templates with caller variables", {
+   })
+   it("Fills multi variable mustache templates with caller variables", {
+   })
+   it("Leaves non-template containing strings alone", {
+   })
+   it("Leaves empty strings alone", {
+   })
+   it("Works with non-default template delimiters", {
+   })
+   it("Works when variables are supplied via the env", {
+   })
+})
+
+describe( "templateFill() when as.R is TRUE", {
+   it("Runs single code mustache templates in (same) caller frame", {
+   })
+   it("Runs multi variable mustache templates in (same) caller frame", {
+   })
+   it("Leaves non-template containing strings alone if as.R set", {
+   })
+   it("Leaves empty strings alone if as.R set", {
+   })
+   it("Runs code with non-default template delimiters", {
+   })
+   it("Runs code in the supplied env if its specified", {
+   })
+})
+
+describe( "templateFill() exception handling, with and without as.R", {
+   it("Dies if mismatched number of open and close delimiters", {
+   })
+   it("Dies if nested open and close delimiters", {
+   })
+   it("Dies if out-of order open and close delimiters (close before open)", {
+   })
+   it("Dies if open and close delimiters are same", {
+   })
+   it("Dies if R variable not found (as.R = FALSE)", {
+   })
+   it("Dies if R code fails (as.R = FALSE)", {
+   })
+
+})
