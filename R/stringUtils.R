@@ -105,7 +105,8 @@ regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
 #'
 #' @return A copy of the original vector of strings, but with variable names
 #'   replaced with their values, or with the result of evaluating the
-#'   interpolated string as R code.
+#'   interpolated string as R code. Note that everything is returned as a
+#'   string, so '{1+1}' is returned as '2'.
 #'
 #' @export
 templateFill <- function( x,
@@ -115,11 +116,11 @@ templateFill <- function( x,
    if (length(delim) != 2) {
       stop("delim= must have exactly two elements.")
    }
-   if (delim[1] == delim[2]) { stop("delim= must have different elements.") }
+   if (delim[1] == delim[2]) { stop("delim= must have different open and close elements") }
    if (    grepl(delim[1], delim[2], fixed= TRUE)
-        || grepl(delim[1], delim[2], fixed= TRUE)
+        || grepl(delim[2], delim[1], fixed= TRUE)
    ) {
-      stop("Can't have the one of the delimiters embeded in the other.")
+      stop("Can't have one of the delimiters embeded in the other.")
    }
    if (as.R) {
       warning( "Potential security risk:",
@@ -146,11 +147,11 @@ templateFill <- function( x,
       # and closed delimiters, fail for the whole thing.
       if (length(starts[[stringNum]]) > length(ends[[stringNum]])) {
          stop("Too many ", delim[1], " found in template text element ", stringNum, ".",
-              " Probably missing one or more ", delim[2])
+              " Probably missing one or more ", delim[2], ".")
       }
       else if (length(starts[[stringNum]]) < length(ends[[stringNum]])) {
          stop("Too many ", delim[2], " found in template text element ", stringNum, ".",
-              " Probably missing one or more ", delim[1])
+              " Probably missing one or more ", delim[1], ".")
       }
       # Have equal number of paired delimiters, so ready to start. Haven't
       # verified delimiter come in correct order, that will be done as we
@@ -169,13 +170,13 @@ templateFill <- function( x,
       for (fieldNum in 1:length(starts[[stringNum]])) {
          # This pair of delimiters comes in the correct order, or die.
          if (starts[[stringNum]][fieldNum] > ends[[stringNum]][fieldNum]) {
-            stop(delim[2], " before ", delim[1], " in string", stringNum, " at ", ends[[stringNum]][1], ".")
+            stop(delim[2], " before ", delim[1], " in string ", stringNum, ".")
          }
          # This is not the last pair of delimiters, so check for nexted delimiters
          # (the *next* start can't come before this open delimiter's paired close)
          if (length(starts[[stringNum]]) > fieldNum) {
             if (starts[[stringNum]][fieldNum + 1] < ends[[stringNum]][fieldNum]) {
-               stop("Nested delimiters not allowed: ", delim[1], " occurs again before ", delim[2], " in string", stringNum, " at ", ends[[stringNum]][fieldNum], ".")
+               stop("Nested delimiters not allowed: ", delim[1], " occurs again before ", delim[2], " in string ", stringNum, ".")
             }
          }
          # Yay, we finally have a guaranteed good delimiter pair. Get the contents

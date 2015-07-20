@@ -76,6 +76,10 @@ describe( 'regexprNamedMatches()', {
 })
 
 describe( "templateFill() when as.R is FALSE", {
+   it("Smoke tests", {
+      var1<-"filled"
+      expect_equal(templateFill('{{var1}}'), "filled")
+   })
    it("Fills single variable mustache templates with caller variables", {
       templateText <- c(
          "At the end comes {{var1}}.",
@@ -186,6 +190,14 @@ describe( "templateFill() when as.R is FALSE", {
 })
 
 describe( "templateFill() when as.R is TRUE", {
+   it("Smoke tests", {
+      var1<-"filled"
+      # Variable look-up is code too!
+      expect_equal(templateFill('{{var1}}', as.R= TRUE), "filled")
+      var1<-2
+      expect_equal(templateFill('{{1 + 1}}', as.R= TRUE), "2")
+   })
+
    it("Runs single code mustache templates in (same) caller frame", {
       templateText <- c(
          'At the end comes {{code1 <- "END"; code1}}.',
@@ -260,26 +272,194 @@ describe( "templateFill() when as.R is TRUE", {
    })
 })
 
-describe( "templateFill() exception handling, with and without as.R", {
-   it("Dies if mismatched number of open and close delimiters", {
+describe( "templateFill() exception handling with and without as.R", {
+   it("Dies if too many open default delimiters.", {
+      wantErrorRE = paste(
+         "Too many \\{\\{ found in template text element 1.",
+         "Probably missing one or more \\}\\}.", sep=" "
+      )
+      templateText <- c( "{{var1}}{{var1}}{{" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText), wantErrorRE)
+      expect_error( templateFill(templateText, as.R= TRUE), wantErrorRE)
    })
-   it("Dies if nested open and close delimiters", {
+   it("Dies if too many close default delimiters.", {
+      wantErrorRE = paste(
+         "Too many \\}\\} found in template text element 1.",
+         "Probably missing one or more \\{\\{.", sep=" "
+      )
+      templateText <- c( "{{var1}}{{var1}}}}" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText), wantErrorRE)
+      expect_error( templateFill(templateText, as.R= TRUE), wantErrorRE)
    })
-   it("Dies if out-of order open and close delimiters (close before open)", {
+   it("Dies if too many open default delimiters, not in first string", {
+      wantErrorRE = paste(
+         "Too many \\{\\{ found in template text element 2.",
+         "Probably missing one or more \\}\\}.", sep=" "
+      )
+      templateText <- c( "Good: {{var1}}", "Bad: {{var2}}{{", "}}. oops" )
+      var1<-"dummy"
+      var2<-"aslo dummy"
+      expect_error( templateFill(templateText), wantErrorRE)
+      expect_error( templateFill(templateText, as.R= TRUE), wantErrorRE)
    })
-   it("Dies if specify too few delimiters", {
+   it("Dies if too many close default delimiters, not in first string", {
+      wantErrorRE = paste(
+         "Too many \\}\\} found in template text element 2.",
+         "Probably missing one or more \\{\\{.", sep=" "
+      )
+      templateText <- c( "Good: {{var1}}", "Bad: {{var1}}}}", "{{. oops" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText), wantErrorRE)
+      expect_error( templateFill(templateText, as.R= TRUE), wantErrorRE)
    })
-   it("Dies if specify too many delimiters", {
+   it("Dies if nested open and close default delimiters", {
+      wantErrorRE = paste(
+         "Nested delimiters not allowed: \\{\\{ occurs again before \\}\\}",
+         "in string 1.", sep=" "
+      )
+      templateText <- c( "{{var1{{var1}}var1}}" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText), wantErrorRE)
+      expect_error( templateFill(templateText, as.R= TRUE), wantErrorRE)
    })
-   it("Dies if open and close delimiters are same", {
+   it("Dies if nested open and close default delimiters, not in first string", {
+      wantErrorRE = paste(
+         "Nested delimiters not allowed: \\{\\{ occurs again before \\}\\}",
+         "in string 2.", sep=" "
+      )
+      templateText <- c( "{{var1}} is ok.", "But this is bad: {{var1{{var1}}var1}}" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText), wantErrorRE)
+      expect_error( templateFill(templateText, as.R= TRUE), wantErrorRE)
    })
-   it("Dies if open delimiter embeded in the close delimiters", {
-   })
-   it("Dies if close delimiter embeded in the open delimiters", {
-   })
-   it("Dies if R variable not found (as.R = FALSE)", {
-   })
-   it("Dies if R code fails (as.R = FALSE)", {
+   it("Dies if out-of order open and close default delimiters (close before open)", {
+      wantErrorRE = "\\}\\} before \\{\\{ in string 1."
+      templateText <- c( "}}var1{{Must match in nubmer to trigger this." )
+      var1 <- NULL;
+      expect_error( templateFill(templateText), wantErrorRE)
+      expect_error( templateFill(templateText, as.R= TRUE), wantErrorRE)
    })
 
+   # user delimiters
+
+   it("Dies if too many open user delimiters.", {
+      wantErrorRE = paste(
+         "Too many <<< found in template text element 1.",
+         "Probably missing one or more \\|.", sep=" "
+      )
+      templateText <- c( "<<<var1|<<<var1|<<<" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('<<<', '|')), wantErrorRE)
+      expect_error( templateFill(templateText, delim=c('<<<', '|'), as.R= TRUE), wantErrorRE)
+   })
+   it("Dies if too many close user delimiters.", {
+      wantErrorRE = paste(
+         "Too many \\| found in template text element 1.",
+         "Probably missing one or more <<<.", sep=" "
+      )
+      templateText <- c( "<<<var1|<<<var1||" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('<<<', '|')), wantErrorRE)
+      expect_error( templateFill(templateText, delim=c('<<<', '|'), as.R= TRUE), wantErrorRE)
+   })
+   it("Dies if too many open user delimiters, not in first string", {
+      wantErrorRE = paste(
+         "Too many < found in template text element 2.",
+         "Probably missing one or more \\!\\!\\!.", sep=" "
+      )
+      templateText <- c( "Good: <var1!!!", "Bad: <<<var2!!!", "!!!!!!. oops" )
+      var1<-"dummy"
+      var2<-"aslo dummy"
+      expect_error( templateFill(templateText, delim=c('<', '!!!')), wantErrorRE)
+      expect_error( templateFill(templateText, delim=c('<', '!!!'), as.R= TRUE), wantErrorRE)
+   })
+   it("Dies if too many close user delimiters, not in first string", {
+      wantErrorRE = paste(
+         "Too many \\!\\!\\! found in template text element 2.",
+         "Probably missing one or more <.", sep=" "
+      )
+      templateText <- c( "Good: <var1!!!", "Bad: <var1!!!!!!", "<. oops" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('<', '!!!')), wantErrorRE)
+      expect_error( templateFill(templateText, delim=c('<', '!!!'), as.R= TRUE), wantErrorRE)
+   })
+   it("Dies if nested open and close user delimiters", {
+      wantErrorRE = paste(
+         "Nested delimiters not allowed: < occurs again before \\!\\!\\!",
+         "in string 1.", sep=" "
+      )
+      templateText <- c( "<var1<var1!!!var1!!!" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('<', '!!!')), wantErrorRE)
+      expect_error( templateFill(templateText, delim=c('<', '!!!'), as.R= TRUE), wantErrorRE)
+   })
+   it("Dies if nested open and close user delimiters, not in first string", {
+      wantErrorRE = paste(
+         "Nested delimiters not allowed: <<< occurs again before \\|",
+         "in string 2.", sep=" "
+      )
+      templateText <- c( "<<<var1| is ok.", "But this is bad: <<<var1<<<var1|var1|" )
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('<<<', '|')), wantErrorRE)
+      expect_error( templateFill(templateText, delim=c('<<<', '|'), as.R= TRUE), wantErrorRE)
+   })
+   it("Dies if out-of order open and close user delimiters (close before open)", {
+      wantErrorRE = "\\| before <<< in string 1."
+      templateText <- c( "|var1<<< Must match in number to trigger this." )
+      var1 <- NULL;
+      expect_error( templateFill(templateText, delim=c('<<<', '|')), wantErrorRE)
+      expect_error( templateFill(templateText, delim=c('<<<', '|'), as.R= TRUE), wantErrorRE)
+   })
+
+   it("Dies if specify too few delimiters", {
+      wantErrorRE = "delim= must have exactly two elements."
+      templateText <- "<<var1>>"
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('<<')), wantErrorRE)
+   })
+   it("Dies if specify too many delimiters", {
+      wantErrorRE = "delim= must have exactly two elements."
+      templateText <- "<<var1>>"
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('<<', '>>', '<<>>')), wantErrorRE)
+   })
+   it("Dies if open and close delimiters are same", {
+      wantErrorRE = "delim= must have different open and close elements"
+      templateText <- "||var1||"
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('||', '||')), wantErrorRE)
+   })
+   it("Dies if open delimiter embeded in the close delimiters", {
+      wantErrorRE = "Can't have one of the delimiters embeded in the other."
+      templateText <- "|var1||"
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('|', '||')), wantErrorRE)
+   })
+   it("Dies if close delimiter embeded in the open delimiters", {
+      wantErrorRE = "Can't have one of the delimiters embeded in the other."
+      templateText <- "$||var1||"
+      var1<-"dummy"
+      expect_error( templateFill(templateText, delim=c('$||', '||')), wantErrorRE)
+   })
+   it("Dies if R variable not found (as.R = FALSE)", {
+      wantErrorRE <- "object \'noSuchVar\' not found"
+      expect_error(templateFill('{{noSuchVar}}'), wantErrorRE)
+   })
+   it("Dies if R code fails (as.R = FALSE)", {
+      # Variable look-up is code too!
+      wantErrorRE <- "object \'noSuchVar\' not found"
+      expect_error(templateFill('{{noSuchVar}}', as.R= TRUE), wantErrorRE)
+
+      wantErrorRE <- "Error in eval.*noSuchFunction"
+      expect_error(templateFill('{{noSuchFunction()}}', as.R= TRUE), wantErrorRE)
+   })
+   it("Generates warning if as.R is set", {
+      wantWarningRE= "Potential security risk:.*"
+      # Variable look-up is code too!
+      var1<-"filled"
+      expect_warning(templateFill('{{var1}}', as.R= TRUE), wantWarningRE)
+      expect_warning(templateFill('{{1 + 1}}', as.R= TRUE), wantWarningRE)
+   })
 })
