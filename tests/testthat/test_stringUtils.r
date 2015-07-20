@@ -251,6 +251,12 @@ describe( "templateFill() when as.R is TRUE", {
       expect_equal(got, want)
    })
    it("Runs code in the supplied env if its specified", {
+      templateText <- "{{f<-function(x) {\n   y * x + 1\n}\nx<-3\nf(x)}}"
+      env=new.env(parent=environment())
+      env$y = 1000
+      got<-templateFill(templateText, as.R=TRUE, envir=env);
+      want <- "3001"
+      expect_equal(got, want)
    })
 })
 
