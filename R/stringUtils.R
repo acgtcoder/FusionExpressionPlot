@@ -84,7 +84,8 @@ regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
 #'
 #' @param delim Vector of two string, the first used to signal the start of a
 #' template section and the second used to signal the end. These may not be
-#' the same. By default the delimiers are c( "{{", "}}" )
+#' the same, nor have one embedded in the other/ By default the delimiers are
+#' c( "{{", "}}" )
 #'
 #' @param as.R Set TRUE to allow full R code evaluation. By default is FALSE and
 #'   only allows variable substitution. Setting this true is a security risk
@@ -115,7 +116,11 @@ templateFill <- function( x,
       stop("delim= must have exactly two elements.")
    }
    if (delim[1] == delim[2]) { stop("delim= must have different elements.") }
-
+   if (    grepl(delim[1], delim[2], fixed= TRUE)
+        || grepl(delim[1], delim[2], fixed= TRUE)
+   ) {
+      stop("Can't have the one of the delimiters embeded in the other.")
+   }
    if (as.R) {
       warning( "Potential security risk:",
                " templateFill() is evaluating user-provided R code",

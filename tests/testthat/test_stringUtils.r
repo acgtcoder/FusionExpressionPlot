@@ -199,15 +199,56 @@ describe( "templateFill() when as.R is TRUE", {
          "Also, A WORD comes in the middle."
       )
       expect_equal(got, want)
-
    })
    it("Runs multi variable mustache templates in (same) caller frame", {
+      templateText <- c(
+         "{{x<-1; 1}} and ({{x+1}} or {{x+2}})",
+         "{{x}}{{x*2}}{{x*2+1}}"
+      )
+      got<-templateFill(templateText, as.R=TRUE);
+      want <- c(
+         "1 and (2 or 3)",
+         "123"
+      )
+      expect_equal(got, want)
+   })
+   it("Fills a template only string with a R code result", {
+      templateText <- "{{f<-function(x) {\n   100 * x + 1\n}\nx<-3\nf(x)}}"
+      got<-templateFill(templateText, as.R=TRUE);
+      want <- "301"
+      expect_equal(got, want)
    })
    it("Leaves non-template containing strings alone if as.R set", {
+      templateText <- c( "{{ Start only.", "End only. }}", "{{", "}}" )
+      got<-templateFill(templateText, as.R= TRUE);
+      want <- templateText
+      expect_equal(got, want)
    })
    it("Leaves empty strings alone if as.R set", {
+      templateText <- c( "", "Nothing", "" )
+      got<-templateFill(templateText, as.R= TRUE);
+      want <- templateText
+      expect_equal(got, want)
+   })
+   it("Leaves original template strings alone", {
+      originalTemplateText <- "{{f<-function(x) {\n   100 * x + 1\n}\nx<-3\nf(x)}}"
+      templateFill(originalTemplateText, as.R= TRUE);
+      want <- "{{f<-function(x) {\n   100 * x + 1\n}\nx<-3\nf(x)}}"
+      expect_equal(originalTemplateText, want)
    })
    it("Runs code with non-default template delimiters", {
+      templateText <- c(
+         'At the end comes <<<code1 <- "END"; code1????.',
+         '<<<code2 <- "A WORD"; code2???? comes at the start',
+         "Also, <<<code2???? comes in the middle."
+      )
+      got<-templateFill(templateText, as.R= TRUE, delim=c( '<<<', '????' ));
+      want <- c(
+         "At the end comes END.",
+         "A WORD comes at the start",
+         "Also, A WORD comes in the middle."
+      )
+      expect_equal(got, want)
    })
    it("Runs code in the supplied env if its specified", {
    })
@@ -220,7 +261,15 @@ describe( "templateFill() exception handling, with and without as.R", {
    })
    it("Dies if out-of order open and close delimiters (close before open)", {
    })
+   it("Dies if specify too few delimiters", {
+   })
+   it("Dies if specify too many delimiters", {
+   })
    it("Dies if open and close delimiters are same", {
+   })
+   it("Dies if open delimiter embeded in the close delimiters", {
+   })
+   it("Dies if close delimiter embeded in the open delimiters", {
    })
    it("Dies if R variable not found (as.R = FALSE)", {
    })

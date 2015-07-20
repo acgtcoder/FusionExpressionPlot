@@ -13,7 +13,8 @@ templateFill(x, delim = c("{{", "}}"), as.R = FALSE,
 
 \item{delim}{Vector of two string, the first used to signal the start of a
 template section and the second used to signal the end. These may not be
-the same. By default the delimiers are c( "{{", "}}" )}
+the same, nor have one embedded in the other/ By default the delimiers are
+c( "{{", "}}" )}
 
 \item{as.R}{Set TRUE to allow full R code evaluation. By default is FALSE and
   only allows variable substitution. Setting this true is a security risk
