@@ -4,25 +4,23 @@
 \alias{templateFill}
 \title{Evaluate and fill string templates}
 \usage{
-templateFill(x, openDelim = "{{", closeDelim = "}}", as.R = FALSE,
-  env = new.env(parent = parent.frame()))
+templateFill(x, delim = c("{{", "}}"), as.R = FALSE,
+  envir = new.env(parent = parent.frame()))
 }
 \arguments{
 \item{x}{Vector of strings with fields containing variables or code to be
   interpolated.}
 
-\item{openDelim}{The string used to signal the start of a variable or R code
-  expression. By default uses "\{\{"}
-
-\item{closeDelim}{The string used to signal the close of a varaible or R code
-  expression. By default uses "\}\}"}
+\item{delim}{Vector of two string, the first used to signal the start of a
+template section and the second used to signal the end. These may not be
+the same. By default the delimiers are c( "{{", "}}" )}
 
 \item{as.R}{Set TRUE to allow full R code evaluation. By default is FALSE and
   only allows variable substitution. Setting this true is a security risk
   when you don't trust the provider of the template text as much as you trust
   the person who provided your R code, so it generates a warning.}
 
-\item{env}{The execution environment to be used. Can be used to pass in the
+\item{envir}{The execution environment to be used. Can be used to pass in the
   an environment in which variables are defined for use in interpolation. If
   not specified, then by default this will be a new environment whose parent
   is the callers environment, as returned by parent.frame(). Variables

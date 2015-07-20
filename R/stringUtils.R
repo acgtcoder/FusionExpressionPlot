@@ -82,18 +82,16 @@ regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
 #' @param x Vector of strings with fields containing variables or code to be
 #'   interpolated.
 #'
-#' @param openDelim The string used to signal the start of a variable or R code
-#'   expression. By default uses "\{\{"
-#'
-#' @param closeDelim The string used to signal the close of a varaible or R code
-#'   expression. By default uses "\}\}"
+#' @param delim Vector of two string, the first used to signal the start of a
+#' template section and the second used to signal the end. These may not be
+#' the same. By default the delimiers are c( "{{", "}}" )
 #'
 #' @param as.R Set TRUE to allow full R code evaluation. By default is FALSE and
 #'   only allows variable substitution. Setting this true is a security risk
 #'   when you don't trust the provider of the template text as much as you trust
 #'   the person who provided your R code, so it generates a warning.
 #'
-#' @param env The execution environment to be used. Can be used to pass in the
+#' @param envir The execution environment to be used. Can be used to pass in the
 #'   an environment in which variables are defined for use in interpolation. If
 #'   not specified, then by default this will be a new environment whose parent
 #'   is the callers environment, as returned by parent.frame(). Variables
@@ -110,9 +108,14 @@ regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
 #'
 #' @export
 templateFill <- function( x,
-                          openDelim = '{{', closeDelim = '}}',
-                          as.R = FALSE, env = new.env( parent= parent.frame() )
+                          delim = c( '{{', '}}' ),
+                          as.R = FALSE, envir = new.env( parent= parent.frame() )
 ) {
+   if (length(delim) != 2) {
+      stop("delim= must have exactly two elements.")
+   }
+   if (delim[1] == delim[2]) { stop("delim= must have different elements.") }
+
    if (as.R) {
       warning( "Potential security risk:",
                " templateFill() is evaluating user-provided R code",
@@ -121,8 +124,8 @@ templateFill <- function( x,
    }
 
    # Find delimiter positions
-   starts <- gregexpr(openDelim, x, fixed= TRUE)
-   ends <- gregexpr(closeDelim, x, fixed= TRUE)
+   starts <- gregexpr(delim[1], x, fixed= TRUE)
+   ends <- gregexpr(delim[2], x, fixed= TRUE)
 
    # Pre-allocate the returned vector of strings
    retVal <- character(length(x))
@@ -137,12 +140,12 @@ templateFill <- function( x,
       # If any string has both delimiters, but has a mismatched number of open
       # and closed delimiters, fail for the whole thing.
       if (length(starts[[stringNum]]) > length(ends[[stringNum]])) {
-         stop("Too many ", openDelim, " found in template text element ", stringNum, ".",
-              " Probably missing one or more ", closeDelim)
+         stop("Too many ", delim[1], " found in template text element ", stringNum, ".",
+              " Probably missing one or more ", delim[2])
       }
       else if (length(starts[[stringNum]]) < length(ends[[stringNum]])) {
-         stop("Too many ", closeDelim, " found in template text element ", stringNum, ".",
-              " Probably missing one or more ", openDelim)
+         stop("Too many ", delim[2], " found in template text element ", stringNum, ".",
+              " Probably missing one or more ", delim[1])
       }
       # Have equal number of paired delimiters, so ready to start. Haven't
       # verified delimiter come in correct order, that will be done as we
@@ -161,13 +164,13 @@ templateFill <- function( x,
       for (fieldNum in 1:length(starts[[stringNum]])) {
          # This pair of delimiters comes in the correct order, or die.
          if (starts[[stringNum]][fieldNum] > ends[[stringNum]][fieldNum]) {
-            stop(closeDelim, " before ", openDelim, " in string", stringNum, " at ", ends[[stringNum]][1], ".")
+            stop(delim[2], " before ", delim[1], " in string", stringNum, " at ", ends[[stringNum]][1], ".")
          }
          # This is not the last pair of delimiters, so check for nexted delimiters
          # (the *next* start can't come before this open delimiter's paired close)
          if (length(starts[[stringNum]]) > fieldNum) {
             if (starts[[stringNum]][fieldNum + 1] < ends[[stringNum]][fieldNum]) {
-               stop("Nested delimiters not allowed: ", openDelim, " occurs again before ", closeDelim, " in string", stringNum, " at ", ends[[stringNum]][fieldNum], ".")
+               stop("Nested delimiters not allowed: ", delim[1], " occurs again before ", delim[2], " in string", stringNum, " at ", ends[[stringNum]][fieldNum], ".")
             }
          }
          # Yay, we finally have a guaranteed good delimiter pair. Get the contents
@@ -178,11 +181,11 @@ templateFill <- function( x,
 
          if (as.R) {
             # Evalute template text as R code
-            pieces[2*fieldNum] <- eval(parse(x=field), envir= env)
+            pieces[2*fieldNum] <- eval(parse(x=field), envir= envir)
          }
          else {
             # Evaluate template text as a variable name
-            pieces[2*fieldNum] <- get(field, envir= env, inherits=TRUE)
+            pieces[2*fieldNum] <- get(field, envir= envir, inherits=TRUE)
          }
          nonfieldStart <- ends[[stringNum]][fieldNum] + attr(ends[[stringNum]], 'match.length')[fieldNum]
          if (length(starts[[stringNum]]) > fieldNum) {

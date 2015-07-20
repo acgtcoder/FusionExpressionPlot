@@ -77,16 +77,111 @@ describe( 'regexprNamedMatches()', {
 
 describe( "templateFill() when as.R is FALSE", {
    it("Fills single variable mustache templates with caller variables", {
+      templateText <- c(
+         "At the end comes {{var1}}.",
+         "{{var2}} comes at the start",
+         "Also, {{var2}} comes in the middle."
+      )
+      var1 <- "END"
+      var2 <- "A WORD"
+      got<-templateFill(templateText);
+      want <- c(
+         "At the end comes END.",
+         "A WORD comes at the start",
+         "Also, A WORD comes in the middle."
+      )
+      expect_equal(got, want)
    })
    it("Fills multi variable mustache templates with caller variables", {
+      templateText <- c(
+         "{{var1}} and ({{var2}} or {{var3}})",
+         "{{var1}}{{var2}}{{var3}}"
+      )
+      var1 <- "one"
+      var2 <- "two"
+      var3 <- "three"
+      got<-templateFill(templateText);
+      want <- c(
+         "one and (two or three)",
+         "onetwothree"
+      )
+      expect_equal(got, want)
+   })
+   it("Fills a template only string with a caller variable", {
+      templateText <- "{{var1}}"
+      var1 <- "one"
+      got<-templateFill(templateText);
+      want <- "one"
+      expect_equal(got, want)
    })
    it("Leaves non-template containing strings alone", {
+      templateText <- c( "{{ Start only.", "End only. }}", "{{", "}}" )
+      got<-templateFill(templateText);
+      want <- templateText
+      expect_equal(got, want)
    })
    it("Leaves empty strings alone", {
+      templateText <- c( "", "Nothing", "" )
+      got<-templateFill(templateText);
+      want <- templateText
+      expect_equal(got, want)
+   })
+   it("Leaves original template strings alone", {
+      originalTemplateText <- "{{var1}}"
+      var1 <- "one"
+      templateFill(originalTemplateText);
+      want <- "{{var1}}"
+      expect_equal(originalTemplateText, want)
+
+      originalTemplateText <- c(
+         "At the end comes {{var1}}.",
+         "{{var2}} comes at the start",
+         "Also, {{var2}} comes in the middle."
+      )
+      var1 <- "one"
+      var2 <- "two"
+      templateFill(originalTemplateText);
+      want <- c(
+         "At the end comes {{var1}}.",
+         "{{var2}} comes at the start",
+         "Also, {{var2}} comes in the middle."
+      )
+      expect_equal(originalTemplateText, want)
    })
    it("Works with non-default template delimiters", {
+      templateText <- c(
+         "At the end comes <[var1|.",
+         "<[var2| comes at the start",
+         "Also, <[var2| comes in the middle."
+      )
+      var1 <- "END"
+      var2 <- "A WORD"
+      got <- templateFill(templateText, delim = c( "<[", "|" ) );
+      want <- c(
+         "At the end comes END.",
+         "A WORD comes at the start",
+         "Also, A WORD comes in the middle."
+      )
+      expect_equal(got, want)
    })
    it("Works when variables are supplied via the env", {
+      templateText <- c(
+         "{{var1}} and ({{var2}} or {{var3}})",
+         "{{var1}}{{var2}}{{var3}}"
+      )
+      var1 <- "one"
+      var2 <- "two"
+      var3 <- "three"
+      env=new.env(parent=environment())
+      env$var1 = 'A'
+      env$var2 = 'B'
+      env$var3 = 'C'
+      got<-templateFill(templateText, envir=env);
+      want <- c(
+         "A and (B or C)",
+         "ABC"
+      )
+      expect_equal(got, want)
    })
 })
 
@@ -102,6 +197,8 @@ describe( "templateFill() when as.R is TRUE", {
    it("Runs code with non-default template delimiters", {
    })
    it("Runs code in the supplied env if its specified", {
+   })
+   it("Runs code in a shared env across all strings", {
    })
 })
 
