@@ -187,6 +187,19 @@ describe( "templateFill() when as.R is FALSE", {
 
 describe( "templateFill() when as.R is TRUE", {
    it("Runs single code mustache templates in (same) caller frame", {
+      templateText <- c(
+         'At the end comes {{code1 <- "END"; code1}}.',
+         '{{code2 <- "A WORD"; code2}} comes at the start',
+         "Also, {{code2}} comes in the middle."
+      )
+      got<-templateFill(templateText, as.R= TRUE);
+      want <- c(
+         "At the end comes END.",
+         "A WORD comes at the start",
+         "Also, A WORD comes in the middle."
+      )
+      expect_equal(got, want)
+
    })
    it("Runs multi variable mustache templates in (same) caller frame", {
    })
@@ -197,8 +210,6 @@ describe( "templateFill() when as.R is TRUE", {
    it("Runs code with non-default template delimiters", {
    })
    it("Runs code in the supplied env if its specified", {
-   })
-   it("Runs code in a shared env across all strings", {
    })
 })
 

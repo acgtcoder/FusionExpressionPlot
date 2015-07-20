@@ -181,7 +181,7 @@ templateFill <- function( x,
 
          if (as.R) {
             # Evalute template text as R code
-            pieces[2*fieldNum] <- eval(parse(x=field), envir= envir)
+            pieces[2*fieldNum] <- eval(parse(text=field), envir= envir, enclos=envir)
          }
          else {
             # Evaluate template text as a variable name
