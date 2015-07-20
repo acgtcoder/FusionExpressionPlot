@@ -108,6 +108,50 @@ regexprNamedMatches <- function( matchResults, matchText, use.na=FALSE ) {
 #'   interpolated string as R code. Note that everything is returned as a
 #'   string, so '{1+1}' is returned as '2'.
 #'
+#' @examples
+#' # Template is single text element (could be multi-line)
+#' templateText <- "Dear {{name}}: Please call me at {{phone}}."
+#' name<-"John Doe"
+#' phone<-"555-555-5555"
+#' templateFill(templateText)
+#' #=> [1] "Dear John Doe: Please call me at 555-555-5555."
+#'
+#' # Delimiters can be changed
+#' templateText <- "Dear -<[name]>-: Please contact me at -<[email]>-."
+#' name<-"John"
+#' email<-"the.bobs@@layoffs.com"
+#' templateFill(templateText, delim=c('-<[', ']>-'))
+#' #=> [1] "Dear John: Please contact me at the.bobs@@layoffs.com."
+#'
+#' # Multiple text elements (each could be multi line)
+#' templateText <- c("ID: {{id}}", "Item: {{name}}", "Description: {{desc}}")
+#' id <- "0001-12"
+#' name <- "widget"
+#' desc <- "Widget to foo the bar."
+#' templateFill(templateText)
+#' #=> [1] "ID: 0001-12"
+#' #=> [2] "Item: widget"
+#' #=> [3] "Description: Widget to foo the bar."
+#'
+#' # Evaluating R code
+#' x <- 21
+#' y <- 'Helloooo'
+#' templateText <- c(
+#'     "Simple: {{1 + 1}}",
+#'     "Variables are accessible: {{x *2}}",
+#'     "Complex: {{ echo <- function(x) { paste(x,x,sep='...') }; echo(y) }}",
+#'     "Code environment is shared: {{ echo( 'Goodbyyyy' ) }}"
+#' )
+#' templateFill(templateText, as.R=TRUE)
+#' #=> [1] "Simple: 2"
+#' #=> [2] "Variables are accessible: 42"
+#' #=> [3] "Complex: Helloooo...Helloooo"
+#' #=> [4] "Code environment is shared: Goodbyyyy...Goodbyyyy"
+#' #=> Warning message:
+#' #=> In templateFill(templateText, as.R = TRUE) :
+#' #=>    Potential security risk: templateFill() is evaluating user-provided
+#' #=>    R code If you trust where the template is coming from, you can
+#' #=>    suppress this message with suppressWarnings().
 #' @export
 templateFill <- function( x,
                           delim = c( '{{', '}}' ),
@@ -125,7 +169,7 @@ templateFill <- function( x,
    if (as.R) {
       warning( "Potential security risk:",
                " templateFill() is evaluating user-provided R code",
-               " If you trust where the input text 'x' is coming from,",
+               " If you trust where the template is coming from,",
                " you can suppress this message with suppressWarnings().")
    }
 
