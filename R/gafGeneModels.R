@@ -445,7 +445,7 @@ loadGafModels <- function ( file ) {
    id <- sub("[|].+$", "", df$FeatureID);
    chr <- sub(":.+:[-+]", "", df$CompositeCoordinates);
    exons <- sub( "^.+:", "", sub( ":[-+]$", "", df$CompositeCoordinates ));
-   start <- sub("-.+","", exons);
+   gstart <- sub("-.+","", exons);
    gend <- sub(".+[-]","", exons);
    exons <- strsplit(exons,",")
    strand <- sub("^.+:.+:","", df$CompositeCoordinates);
@@ -477,12 +477,12 @@ loadGafModels <- function ( file ) {
 }
 
 # Get the list of all gene names in the model data frame
-getAllGeneNames <-function( geneModesDF ) {
+getAllGeneNames <-function( geneModelsDF ) {
    ###
    #     PARAM geneModelsDF the data frame returned by laodGeneModels
    ###
    #     Returns a vector of gene names (guaranteed to be unique, even if
    # repeated in the data frame.
    ###
-   return(unique(geneModels$gene));
+   return(unique(geneModelsDF$gene));
 }

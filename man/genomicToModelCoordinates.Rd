@@ -85,6 +85,7 @@ so all coordinates are 5' - 3' transformed.
   gapWidth + 1 - posCoordinate }
 }
 \examples{
+library(GenomicRanges);
 grPos <- GRanges(
    ranges= IRanges(
       start= c( 101, 301, 511, 513, 813 ),

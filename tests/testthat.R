@@ -1,4 +1,4 @@
 library(testthat)
-library(FusionExressionPlot)
+library(FusionExpressionPlot)
 
-test_check("FusionExressionPlot")
+test_check("FusionExpressionPlot")

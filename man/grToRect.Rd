@@ -4,11 +4,21 @@
 \alias{grToRect}
 \title{Plotable rectangles from GRanges Object}
 \usage{
-grToRect(gene, intronWidth = 100, exonHeights = 100,
-  exonFillColors = "blue", exonBorderColors = "black",
+grToRect(gr, intronWidth = 100, exonHeights = 100,
+  exonFillColors = "blue", exonFillColorsCol = "exonFillColors",
+  exonBorderColors = "black", exonBorderColorsCol = "exonBorderColors",
   exonHeightsCol = "exonHeights")
 }
 \arguments{
+\item{gr}{The GenomicRanges object to plot.
+
+  Object giving the gene to calculate the parameters for. Passed through to
+  genomicToModelCoordinates as its gene parameter. Besides the criteria
+  specified there, may also contain data columns 'exonHeight',
+  'exonFillColor' and 'exonBorderColor'. If present, the values in these
+  columns will be used instead on the equivalently names parameters to this
+  function.}
+
 \item{intronWidth}{The fixed spacing to use for gaps between rectangles.
 
   The width of the itron, the x spacing between the exon rectangles. Passed
@@ -27,6 +37,9 @@ grToRect(gene, intronWidth = 100, exonHeights = 100,
   specified exonFillColors must contain the column name in the GRanges object
   to use instead, by default it looks for column 'exonFillColor'.}
 
+\item{exonFillColorsCol}{The name of GRanges column to use for
+  exonFillColors, if not specified. By default 'exonFillColor'}
+
 \item{exonBorderColors}{The vector of border colors to use for the
   rectangles.
 
@@ -34,23 +47,11 @@ grToRect(gene, intronWidth = 100, exonHeights = 100,
   specified exonBorderColors must contain the column name in the GRanges
   object to use instead, by default it looks for column 'exonBorderColor'.}
 
-\item{exonHeightsCol}{The name of GRanges column to use for exonHeights, if
-  not specified. By default 'exonHeight'}
-
-\item{gr}{The GenomicRanges object to plot.
-
-  Object giving the gene to calculate the parameters for. Passed through to
-  genomicToModelCoordinates as its gene parameter. Besides the criteria
-  specified there, may also contain data columns 'exonHeight',
-  'exonFillColor' and 'exonBorderColor'. If present, the values in these
-  columns will be used instead on the equivalently names parameters to this
-  function.}
-
-\item{exonFillColorsCol}{The name of GRanges column to use for
-  exonFillColors, if not specified. By default 'exonFillColor'}
-
 \item{exonBorderColorsCol}{The name of GRanges column to use for
   exonBorderColors, if not specified. By default 'exonBorderColor'}
+
+\item{exonHeightsCol}{The name of GRanges column to use for exonHeights, if
+  not specified. By default 'exonHeight'}
 }
 \value{
 A list with the following elements:

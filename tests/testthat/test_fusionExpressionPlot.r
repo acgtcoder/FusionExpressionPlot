@@ -310,87 +310,79 @@ test_that( 'genomicToModelCoordinates; coordinate extremes ok, -model?', {
 # grFromCohortDf()
 #
 
-test_that( 'grLabelMap from cohort with one sample, one gene', {
-   fail( 'Returns all genes if unfiltered, with correct granges objects' )
-   fail( 'Returns all and only selected genes if filtered, with correct granges objects' )
-})
-
-test_that( 'grLabelMap from cohort with two samples, two gene', {
-   fail( 'Returns all genes for 1st sample if unfiltered, with correct granges objects' )
-   fail( 'Returns all and only selected genes for 1st sample if filtered, with correct granges objects' )
-   fail( 'Returns all genes for 2nd sample if unfiltered, with correct granges objects' )
-   fail( 'Returns all and only selected genes for 2nd sample if filtered, with correct granges objects' )
-})
-
+# test_that( 'expressionGrLabelMap', {
 #
-# grToRect()
+# })
 #
-
-test_that( 'grToRect generates correct rectangle, all defaults', {
-   fail( 'Correct xStarts' )
-   fail( 'Correct xEnds' )
-   fail( 'Correct yBottoms' )
-   fail( 'Correct yTops' )
-   fail( 'Correct fill colors' )
-   fail( 'Correct border colors' )
-   fail( 'Correct xRanges' )
-   fail( 'Correct yRanges' )
-})
-
-test_that( 'grToRect generates correct rectangle, just one exon', {
-   fail( 'Correct xStarts' )
-   fail( 'Correct xEnds' )
-   fail( 'Correct yBottoms' )
-   fail( 'Correct yTops' )
-   fail( 'Correct fill colors' )
-   fail( 'Correct border colors' )
-   fail( 'Correct xRanges' )
-   fail( 'Correct yRanges' )
-})
-
-test_that( 'grToRect generates correct rectangle, new column names', {
-   fail( 'Correct xStarts' )
-   fail( 'Correct xEnds' )
-   fail( 'Correct yBottoms' )
-   fail( 'Correct yTops' )
-   fail( 'Correct fill colors' )
-   fail( 'Correct border colors' )
-   fail( 'Correct xRanges' )
-   fail( 'Correct yRanges' )
-})
-
-test_that( 'grToRect generates correct rectangle, manual values', {
-   fail( 'Correct xStarts' )
-   fail( 'Correct xEnds' )
-   fail( 'Correct yBottoms' )
-   fail( 'Correct yTops' )
-   fail( 'Correct fill colors' )
-   fail( 'Correct border colors' )
-   fail( 'Correct xRanges' )
-   fail( 'Correct yRanges' )
-})
-
-test_that( 'grToRect generates correct rectangle, manual values wrap', {
-   fail( 'Correct xStarts' )
-   fail( 'Correct xEnds' )
-   fail( 'Correct yBottoms' )
-   fail( 'Correct yTops' )
-   fail( 'Correct fill colors' )
-   fail( 'Correct border colors' )
-   fail( 'Correct xRanges' )
-   fail( 'Correct yRanges' )
-})
-
-test_that( 'grToRect generates correct rectangle, manual values and new column names', {
-   fail( 'Correct xStarts' )
-   fail( 'Correct xEnds' )
-   fail( 'Correct yBottoms' )
-   fail( 'Correct yTops' )
-   fail( 'Correct fill colors' )
-   fail( 'Correct border colors' )
-   fail( 'Correct xRanges' )
-   fail( 'Correct yRanges' )
-})
+# #
+# # grToRect()
+# #
+#
+# test_that( 'grToRect generates correct rectangle, all defaults', {
+#    fail( 'Correct xStarts' )
+#    fail( 'Correct xEnds' )
+#    fail( 'Correct yBottoms' )
+#    fail( 'Correct yTops' )
+#    fail( 'Correct fill colors' )
+#    fail( 'Correct border colors' )
+#    fail( 'Correct xRanges' )
+#    fail( 'Correct yRanges' )
+# })
+#
+# test_that( 'grToRect generates correct rectangle, just one exon', {
+#    fail( 'Correct xStarts' )
+#    fail( 'Correct xEnds' )
+#    fail( 'Correct yBottoms' )
+#    fail( 'Correct yTops' )
+#    fail( 'Correct fill colors' )
+#    fail( 'Correct border colors' )
+#    fail( 'Correct xRanges' )
+#    fail( 'Correct yRanges' )
+# })
+#
+# test_that( 'grToRect generates correct rectangle, new column names', {
+#    fail( 'Correct xStarts' )
+#    fail( 'Correct xEnds' )
+#    fail( 'Correct yBottoms' )
+#    fail( 'Correct yTops' )
+#    fail( 'Correct fill colors' )
+#    fail( 'Correct border colors' )
+#    fail( 'Correct xRanges' )
+#    fail( 'Correct yRanges' )
+# })
+#
+# test_that( 'grToRect generates correct rectangle, manual values', {
+#    fail( 'Correct xStarts' )
+#    fail( 'Correct xEnds' )
+#    fail( 'Correct yBottoms' )
+#    fail( 'Correct yTops' )
+#    fail( 'Correct fill colors' )
+#    fail( 'Correct border colors' )
+#    fail( 'Correct xRanges' )
+#    fail( 'Correct yRanges' )
+# })
+#
+# test_that( 'grToRect generates correct rectangle, manual values wrap', {
+#    fail( 'Correct xStarts' )
+#    fail( 'Correct xEnds' )
+#    fail( 'Correct yBottoms' )
+#    fail( 'Correct yTops' )
+#    fail( 'Correct fill colors' )
+#    fail( 'Correct border colors' )
+#    fail( 'Correct xRanges' )
+#    fail( 'Correct yRanges' )
+# })
+#
+# test_that( 'grToRect generates correct rectangle, manual values and new column names', {
+#    fail( 'Correct xStarts' )
+#    fail( 'Correct xEnds' )
+#    fail( 'Correct yBottoms' )
+#    fail( 'Correct yTops' )
+#    fail( 'Correct fill colors' )
+#    fail( 'Correct border colors' )
+#    fail( 'Correct xRanges' )
+#    fail( 'Correct yRanges' )
+# })
 
 makeGrFull <- function() {
    gr <- grNew(

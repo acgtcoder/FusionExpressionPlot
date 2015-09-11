@@ -38,7 +38,7 @@ the vector of colors the data maps to.
 Maps colors to a vector of numeric data based on a pallette of colors and a
 vector of bin ends. Can use either a named pallete from the color brewer
 package or a list of explicit colors. Data is binned and labeled with the
-associated color as per \code{\link{sortDataIntoBins}}. This does not
+associated color as per \code{\link{mapLabels}}. This does not
 produce smooth gradient, but instead compresses the information in the data
 into a discrete set of colors.
 }
@@ -95,7 +95,7 @@ mapColors( x, binEnds= c(-Inf,-10,10,Inf))
 mapColors( x, binEnds= c(-Inf,-10,10,Inf), reverse=TRUE)
 
 # Map data using an explicit color vector
-colorMap <- ('red', 'violet', 'blue')
+colorMap <- c('red', 'violet', 'blue')
 mapColors( x, binEnds= c(-Inf,-10,10,Inf), colors= colorMap)
 }
 

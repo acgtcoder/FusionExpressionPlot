@@ -1,4 +1,5 @@
 
+
 # Given a file of sample names, returns those names as a vector
 getSampleCohort <- function( file ) {
    ###
@@ -16,7 +17,7 @@ getSampleCohort <- function( file ) {
    return( samples );
 }
 
-# Read file of sample, data file name and return a data frame containing thoes
+# Read file of sample, data file name and return a data frame containing those
 # samples given in "samples".
 getCohortFiles <- function ( file, samples) {
    ###
@@ -148,7 +149,7 @@ getCohortExonExpressionData <- function ( geneModels, cohortFiles, progress=TRUE
 }
 
 
-# Nrmalzes data
+# Normalizes data
 normExpressionData <- function( exonExpressionData ) {
 
    # Data columns are 10+

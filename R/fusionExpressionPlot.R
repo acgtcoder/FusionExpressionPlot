@@ -114,10 +114,14 @@ grFromCohortDf <- function( df, genes, sample, column='exonData' ) {
 # Specialized functions for use in relative expression graphs
 ###
 
-# The grLabelMap as used with exon expression
+# Add a column of colors to gr based on relativeExpression column
 expressionGrLabelMap <- function( gr ) {
-   return( grLabelMap( gr, column='relativeExpression', as.column = 'exonFillColor',
-                       binEnds= c(Inf,0.3,0.1,-0.1,-0.3,-Inf) ))
+   exonFillColor <- mapColors( gr$relativeExpression,
+                               binEnds= c(Inf,0.3,0.1,-0.1,-0.3,-Inf),
+                               brewerPaletteName= 'RdBu', reverse=FALSE
+   )
+   grAddColumn(gr, 'exonFillColor', exonFillColor)
+   return(gr)
 }
 
 #' Convert from genomic feature to model coordinates.
@@ -194,6 +198,7 @@ expressionGrLabelMap <- function( gr ) {
 #' @return Integer vector of genomic positions converted to model coordinates.
 #'
 #' @examples
+#' library(GenomicRanges);
 #' grPos <- GRanges(
 #'    ranges= IRanges(
 #'       start= c( 101, 301, 511, 513, 813 ),
@@ -368,34 +373,35 @@ genomicToModelCoordinates <- function(
 #'
 #' @export
 grToRect <- function (
-   gene, intronWidth= 100,
-   exonHeights= 100, exonFillColors= 'blue', exonBorderColors= 'black',
+   gr, intronWidth= 100,
+   exonHeights= 100, exonFillColors= 'blue', exonFillColorsCol= 'exonFillColors',
+   exonBorderColors= 'black', exonBorderColorsCol= 'exonBorderColors',
    exonHeightsCol='exonHeights'
 ) {
 
    rect <- list();
-   rect$onReverseStrand = (as.character(strand(gene)[1]) == '-');
+   rect$onReverseStrand = (as.character(strand(gr)[1]) == '-');
 
    if (rect$onReverseStrand) {
-      rect$xStarts  <- rev(genomicToModelCoordinates( end(  gene), gene, intronWidth ));
-      rect$xEnds    <- rev(genomicToModelCoordinates( start(gene), gene, intronWidth ));
-      rect$yBottoms <- rep( 0, length( gene ));
-      rect$yTops        <- rev(elementMetadata(gene)[['exonHeight']]);
-      rect$fillColors   <- rev(elementMetadata(gene)[['exonFillColor']]);
-      rect$borderColors <- rev(elementMetadata(gene)[['exonBorderColor']]);
+      rect$xStarts  <- rev(genomicToModelCoordinates( end(  gr), gr, intronWidth ));
+      rect$xEnds    <- rev(genomicToModelCoordinates( start(gr), gr, intronWidth ));
+      rect$yBottoms <- rep( 0, length( gr ));
+      rect$yTops        <- rev(elementMetadata(gr)[['exonHeight']]);
+      rect$fillColors   <- rev(elementMetadata(gr)[['exonFillColor']]);
+      rect$borderColors <- rev(elementMetadata(gr)[['exonBorderColor']]);
    }
    else {
-      rect$xStarts  <- genomicToModelCoordinates( start(gene), gene, intronWidth );
-      rect$xEnds    <- genomicToModelCoordinates( end(  gene), gene, intronWidth );
-      rect$yBottoms <- rep( 0, length( gene ));
-      rect$yTops        <- elementMetadata(gene)[['exonHeight']];
-      rect$fillColors   <- elementMetadata(gene)[['exonFillColor']];
-      rect$borderColors <- elementMetadata(gene)[['exonBorderColor']];
+      rect$xStarts  <- genomicToModelCoordinates( start(gr), gr, intronWidth );
+      rect$xEnds    <- genomicToModelCoordinates( end(  gr), gr, intronWidth );
+      rect$yBottoms <- rep( 0, length( gr ));
+      rect$yTops        <- elementMetadata(gr)[['exonHeight']];
+      rect$fillColors   <- elementMetadata(gr)[['exonFillColor']];
+      rect$borderColors <- elementMetadata(gr)[['exonBorderColor']];
    }
 
-   if ( is.null( rect$yTops        )) { rect$yTops        <- rep_len( exonHeights,      length( gene )); }
-   if ( is.null( rect$fillColors   )) { rect$fillColors   <- rep_len( exonFillColors,   length( gene )); }
-   if ( is.null( rect$borderColors )) { rect$borderColors <- rep_len( exonBorderColors, length( gene )); }
+   if ( is.null( rect$yTops        )) { rect$yTops        <- rep_len( exonHeights,      length( gr )); }
+   if ( is.null( rect$fillColors   )) { rect$fillColors   <- rep_len( exonFillColors,   length( gr )); }
+   if ( is.null( rect$borderColors )) { rect$borderColors <- rep_len( exonBorderColors, length( gr )); }
 
    rect$xRange <- c( min(rect$xStarts),  max(rect$xEnds));
    rect$yRange <- c( min(rect$yBottoms), max(rect$yTops));
@@ -627,17 +633,6 @@ getFusionExpressionPlotData <- function( genes, fusions, geneNames,
    #   geneNames = list of gene names, must match those in genes and fusions
    ###
 
-   if (DEBUG) {
-      print( "In getFusionExpressionPlotData() with:");
-      print(genes);
-      if (is.null(fusions)) {
-         print(NULL)
-      } else {
-         print(fusions)
-      }
-      print(geneNames);
-   }
-
    geneRects = list();
    fusionPolys = list();
    xOffset = 0;
@@ -769,25 +764,11 @@ plot.fusionExpressionPlotData <- function ( data, title, file= 'temp.pdf',
 
 plot.fusionExpressionPair <- function( geneName1, geneName2, fusions1, fusions2, sample, cohortExpressionDF ) {
 
-   if (DEBUG) {
-      print("Called plot.fusionExpressionPair");
-      print("geneName1:"); print(geneName1);
-      print("geneName2:"); print(geneName2);
-      print("fusions1:"); print(fusions1);
-      print("fusions2:"); print(fusions2);
-      print("sample:"); print(sample);
-      print("cohortExpressionDF:"); print(cohortExpressionDF);
-
-   }
    gr1 <- grFromCohortDf(cohortExpressionDF, geneName1, sample, column='relativeExpression')[[geneName1]];
-   if (DEBUG) { print("Gene 1, before color mapping"); print( gr1 ); }
    gr2 <- grFromCohortDf(cohortExpressionDF, geneName2, sample, column='relativeExpression')[[geneName2]];
-   if (DEBUG) { print("Gene 2, before color mapping"); print( gr2 ); }
 
    gr1 <- expressionGrLabelMap( gr1 );
-   if (DEBUG) { print("Gene 1, after color mapping"); print( gr1 ); }
    gr2 <- expressionGrLabelMap( gr2 );
-   if (DEBUG) { print("Gene 2, after color mapping"); print( gr2 ); }
 
    geneNames <- c(geneName1, geneName2);
    genes <- list();
@@ -804,16 +785,6 @@ plot.fusionExpressionPair <- function( geneName1, geneName2, fusions1, fusions2,
 }
 
 plot.fusionExpressionOne <- function( geneName1, fusions1, sample, cohortExpressionDF ) {
-
-   if (DEBUG) {
-      print(geneName1)
-      if (is.null(fusions1)) {
-         print(NULL)
-      } else {
-         print(fusions1)
-      }
-      print(sample)
-   }
 
    gr <- grFromCohortDf(cohortExpressionDF, geneName1, sample, column='relativeExpression')[[geneName1]];
 
@@ -1284,8 +1255,8 @@ demo.plot.fusionExpressionPlotData2 <- function() {
 #          expressionGr1 <- expressionGrFactory( expresionDF, gene= plot$gene1, sample= plot$sample );
 #          expressionGr2 <- expressionGrFactory( expresionDF, gene= plot$gene2, sample= plot$sample );
 #          cutPoints <- c(Inf, 0.3, 0.1, -0.1, -0.3, -Inf);
-#          expressionGr1 <- grLabelMap(expressionGr1, cutPoints, column='relativeExpression' );
-#          expressionGr2 <- grLabelMap(expressionGr2, cutPoints, column='relativeExpression' );
+#          expressionGr1 <- expressionGrLabelMap(expressionGr1);
+#          expressionGr2 <- expressionGrLabelMap(expressionGr2);
 #
 #          pdf(file=paste0(baseDir,'/',plot$name), width=1000/96, height=(100+220)/96 );
 #          plot.geneModelFusion(

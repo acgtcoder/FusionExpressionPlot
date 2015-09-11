@@ -19,7 +19,7 @@ Chromosome names
     digits with no leading 0. Chromosomes with letter names are specified with a
     capitalized letter (M, X, or Y). The exception is the mitichondiral
     chromosome, which may be labeled chrM_rCRS instead of chrM due to issues 
-    with the promolgated genome. There should never be mixed names for the
+    with the promulgated genome. There should never be mixed names for the
     mitochondrial chromosome in the same file; it should be one or the other.
     Case matters, CHRx, chrx, and ChrX are invalid names.
 
@@ -28,16 +28,16 @@ Chromosome names
     Where sorting matters, the order is as given above. chr10 comes just after
     chr9, and chrM comes just after chr22. Note that this requires special
     handling to sort correctly. Neither normal alphabetic nor numeric sorting
-    will work correctly.
+    will work.
 
 Feature locations
 
 :   Features are specified by a location on the genome. This location is
     usually given as a range of positions on one of the two strands of a
-    chromosome.  The positions are specified as if the feature was on the +
+    chromosome.  The positions are specified as if the feature was on the '+'
     (5' to 3') strand, where the first base of the chromosome starts at 1 and
     the given positions represent the first and last base of the feature
-    (inclusively). Features on the - (3' to 5' strand) actually run in the
+    (inclusively). Features on the '-' (3' to 5') strand run in the
     reverse direction, so the given first position is really the last base of
     the feature and the given last position is actually the first base of the
     feature.
@@ -95,7 +95,7 @@ Column headings
     but the ignored column headings must be parseable. To maximum portability,
     all column headings, even those ignored, should be assumed to be case
     sensitive but should be unique within a file when considered case
-    insensitively. Anything characters other than letters, digits, periods,
+    insensitively. Any characters other than letters, digits, periods,
     underscores, and hyphens should be avoided in column header names -
     especially spaces. Tabs and returns are not allowed under any circumstances
     as these are file delimiters.
@@ -133,14 +133,15 @@ Gaf 2.1 (TCGA.hg19.June2011.gaf)
     uploaded by UNC. Contains descriptions including names and location models
     for all the genes, transcipts, exons and more. Used as a reference for the
     exons described in the Exon expression files and to associate gene or
-    transcript names exon models.
+    transcript names with exon models.
 
 Exon expression files (bt.exon_quantification.txt)
   
-:   This file describes RNA expression for one sample on a per-exon basis. It is
+:   Each exon expression file describe RNA expression for one sample on a
+    per-exon basis. It is
     normally downloaded from the TCGA website and is publically available after a
-    short embargo period. It is usally called bt.exon_quantification.txt, with the
-    directory it is in specifying the sample this file is associated with.
+    short embargo period. It is usally called bt.exon_quantification.txt. The
+    directory it is in is the name of the sample it is associated with.
   
 Cohort definition file
 
@@ -169,7 +170,7 @@ This package only works with version 2 of the gaf, specifically the hg19 version
 from June 2011.  This annotation data was used by UNC-LCCC to generate the
 TCGA RNASeq expression results (V2 - genome alignment based).  No dbSNP
 information is used, so the smaller version of the gaf that does not
-include the SNP annotations is faster to extract. It can be downloaded from
+include the SNP annotations is fine to use. It can be downloaded from
 the NCI [here](http://bitly.com/1IbcrAs "This link is condensed via bitly
 as it is too long. The raw link is https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/outputs/"). You probably want TCGA.hg19.June2011.gaf.gz. The description
 of this file is unfortunately only included with version 2.0 of the gaf,

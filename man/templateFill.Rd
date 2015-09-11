@@ -25,7 +25,7 @@ is \code{\{\{} and the close delimiter is \code{\}\}}.}
 \item{envir}{The execution environment to be used. Can be used to pass in the
   an environment in which variables are defined for use in interpolation. If
   not specified, then by default this will be a new environment whose parent
-  is the caller's environment, as returned by \code{\link{parent.frame()}}.
+  is the caller's environment, as returned by \code{\link{parent.frame}}.
   Variables visible in the calling function (or set there) will be avialble
   for use in the template. Note that although R code will normally only set
   or change variables in this frame when evaluated, it can set or change
@@ -115,7 +115,7 @@ env$z
 env$f(3)
 #=> [1] 9
 x
-[1] 1
+#=>[1] 1
 
 # Template code CAN affect environment
 x <- "safe command"; y <- "also safe command"

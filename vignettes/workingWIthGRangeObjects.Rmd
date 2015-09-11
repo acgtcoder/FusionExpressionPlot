@@ -34,7 +34,7 @@ exons. In keeping with the role of GRange objects in this package, only
 single-strand, single chromosome objects can be created with grNew().
 
 ```{r}
-library(FusionExressionPlot)
+library(FusionExpressionPlot)
 gr <- grNew(
    start= c( 101, 301, 511, 513, 813 ),
    end= c( 200, 500, 511, 612, 822 ),

@@ -7,6 +7,10 @@
 mapLabels(data, binEnds, binLabels)
 }
 \arguments{
+\item{data}{A vector of numeric data to bin. NA values and values above or
+  below the lowest bin end are allowed, they convert to NA's in the returned
+  label vector.}
+
 \item{binEnds}{The n+1 ends of the n bins into which the data is sorted. One
   bin would be c(-Inf, Inf). Two bins ~ equally weighted would be c(-Inf,
   median(data), Inf). This vector will be sorted before assigning labels, so
@@ -16,10 +20,6 @@ mapLabels(data, binEnds, binLabels)
 
 \item{binLabels}{The vector of names corresponding to the labels of the bin a
   value belongs in.}
-
-\item{x}{A vector of numeric data to bin. NA values and values above or
-  below the lowest bin end are allowed, they convert to NA's in the returned
-  label vector.}
 }
 \value{
 The vector of bin labels corresponding to the bins the data was
