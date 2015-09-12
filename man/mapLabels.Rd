@@ -2,21 +2,22 @@
 % Please edit documentation in R/dataRangeReductionUtils.R
 \name{mapLabels}
 \alias{mapLabels}
-\title{Map labels to values}
+\title{Maps values into labeled bins}
 \usage{
 mapLabels(data, binEnds, binLabels)
 }
 \arguments{
-\item{data}{A vector of numeric data to bin. NA values and values above or
-  below the lowest bin end are allowed, they convert to NA's in the returned
-  label vector.}
+\item{data}{A vector of numeric data to bin. Where values are \code{NA},
+  above the highest bin end, or below the lowest they convert to \code{NA} in
+  the returned label vector.}
 
 \item{binEnds}{The n+1 ends of the n bins into which the data is sorted. One
-  bin would be c(-Inf, Inf). Two bins ~ equally weighted would be c(-Inf,
-  median(data), Inf). This vector will be sorted before assigning labels, so
-  reverse the label order instead of providing bins as high to low. Bin ends
-  belong to the lower bin, with the lowest bin end also part of the lowest
-  bin.}
+  bin might be \code{c(-Inf, Inf)}. Two bins equally weighted would be
+  \code{c(-Inf, median(data), Inf)}. This vector will be sorted before
+  assigning labels, so reverse the label order instead of providing bins as
+  high to low. Data exactly matching bin ends will be in the lower bin, with
+  the lowest bin end also part of the lowest bin. It is an error if any bin
+  end is repeated.}
 
 \item{binLabels}{The vector of names corresponding to the labels of the bin a
   value belongs in.}
@@ -26,16 +27,49 @@ The vector of bin labels corresponding to the bins the data was
   sorted into.
 }
 \description{
-Maps labels to a vector of numeric data based on a
-vector of bin ends. Each label corresponds to one of n bins defined by n+1
-bin boundaries (including start and end boudaries, probably -Inf and Inf).
-Returns a vector of the same length as data, but with each value replaced by
-the binLabel for the bin it was sorted into. E.g if the bin labels are
-categories like low, medium and high, this converts data to categories. Values equal to bin boundaries
-are put in the lower bin, with the lowest bin boundary also included in the
-lowest bin.
+Basically this is a convenience wrapper around \code{\link{cut}}.
 }
 \details{
-Basically this is a convienience wrapper around cut().
+Maps labels to a vector of numeric data based on a vector of bin ends. Each
+label corresponds to one of n bins defined by n+1 bin boundaries (including
+start and end boundaries, probably \code{-Inf} and \code{Inf}). It is an
+error if the number of bins and the number of labels differ. Returns a vector
+of the same length as data, but with each value replaced by the binLabel for
+the bin it was sorted into. E.g if the bin labels are categories like "low",
+"medium" and "high", this converts data to categories. Values equal to bin
+boundaries are put in the lower bin, with the lowest bin boundary also
+included in the lowest bin. Note, bin ends are always sorted from lowest to
+highest. If you want the labels in the other order, just reverse the labels
+vector.
+}
+\section{Errors}{
+
+   \describe{
+      \item{
+         \code{'breaks' are not unique}
+      }{
+         It is an error if any bin end is repeated.
+      }
+   \item{
+      \code{lengths of 'breaks' and 'labels' differ}
+   }{
+      It is an error if the number of labels differs from the number of
+      bins, or equivalently is not one less than the number of bin ends.
+   }
+}
+}
+\examples{
+ends = c(Inf,-Inf,1,-1)    # Sorted to c(-Inf, -1, 1, Inf)
+labels = c('-', '0', '+' )
+mapLabels( c(-Inf,-5,-1,-0.5,0,0.5,1,5,Inf), ends, labels)
+#=> [1] "-", "-", "-", "0", "0", "0", "0", "+", "+"
+
+ends = c(-10, 0, 10)
+labels = c('-', '+')
+mapLabels( c(-20, -10, -5, 0, NA, 5.2, 10, Inf), ends, labels)
+#=> [1] NA  "-" "-" "-" NA  "+" "+" NA
+}
+\seealso{
+\code{\link{cut}}
 }
 
