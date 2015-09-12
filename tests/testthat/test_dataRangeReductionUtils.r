@@ -47,7 +47,15 @@ describe( "mapLabels()", {
    })
 
    it( 'errors if label count and bin number are not the same', {
-      wantErrorRE <- 'Too many labels specified'
+      wantErrorRE <- "'breaks' are not unique"
+      expect_error( mapLabels( 7, c(-1,0,0,1), c('-', '0', '+') ), wantErrorRE )
+
+      wantErrorRE <- "lengths of 'breaks' and 'labels' differ"
+      expect_error( mapLabels( 0, c(-1,0,1), c('bob') ), wantErrorRE )
+
+      wantErrorRE <- "lengths of 'breaks' and 'labels' differ"
+      expect_error( mapLabels( 0, c(-1,0,1), c('a','b', 'c') ), wantErrorRE )
+
    })
 })
 #

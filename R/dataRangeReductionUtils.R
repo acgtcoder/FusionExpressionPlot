@@ -70,6 +70,9 @@
 #'
 #' @export
 mapLabels <- function(data, binEnds, binLabels) {
+   if (length(binLabels) != length(binEnds) -1 ) {
+      stop("lengths of 'breaks' and 'labels' differ")
+   }
    bins = cut( data, binEnds, labels = 1:( length(binEnds) - 1 ), include.lowest = TRUE );
    return( binLabels[ as.numeric( levels(bins)[bins] )]);
 }
