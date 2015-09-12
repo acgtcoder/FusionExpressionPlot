@@ -58,29 +58,73 @@ describe( "mapLabels()", {
 
    })
 })
-#
-# mapColors()
-#
 
-test_that( 'mapColors; adds or returns correct column for default pallette', {
-   x <- c(-100, -1, 0, 1, 1000)
-   binEnds = c(-Inf,-10,10,Inf)
-   colSet <- brewer.pal(3, 'RdBu')
+describe( 'mapColors()', {
 
-   # Forward
-   got <- mapColors( x, binEnds=binEnds )
-   want <- c(colSet[1], colSet[2], colSet[2], colSet[2], colSet[3])
-   expect_equal(got, want)
+   describe( 'behavior with default palette', {
 
-   # Reverse
-   got <- mapColors( x, binEnds=binEnds, reverse=TRUE )
-   want <- c(colSet[3], colSet[2], colSet[2], colSet[2], colSet[1])
-   expect_equal(got, want)
+      x <- c(-100, -1, 0, 1, 1000)
+      binEnds = c(-Inf,-10,10,Inf)
+      colSet <- brewer.pal(3, 'RdBu')
 
-   colSet <- c('red', 'violet', 'blue')
-   got <- mapColors( x, binEnds=binEnds, colors= colSet )
-   want <- c(colSet[1], colSet[2], colSet[2], colSet[2], colSet[3])
-   expect_equal(got, want)
+      it( 'returns correct colors', {
 
+         # Forward
+         got <- mapColors( x, binEnds=binEnds )
+         want <- c(colSet[1], colSet[2], colSet[2], colSet[2], colSet[3])
+         expect_equal(got, want)
+      })
+
+      it( 'returns correct colors when reversed', {
+
+         # Reverse
+         got <- mapColors( x, binEnds=binEnds, reverse=TRUE )
+         want <- c(colSet[3], colSet[2], colSet[2], colSet[2], colSet[1])
+         expect_equal(got, want)
+      })
+
+   })
+
+   describe( 'behavior with specified palette', {
+
+      x <- c(-100, -1, 0, 1, 1000)
+      binEnds = c(-Inf,-10,0,10,Inf)
+      colSet <- brewer.pal(4, 'Spectral')
+
+      it( 'returns correct colors', {
+
+         # Forward
+         got <- mapColors( x, binEnds=binEnds, brewerPaletteName = 'Spectral' )
+         want <- c(colSet[1], colSet[2], colSet[2], colSet[3], colSet[4])
+         expect_equal(got, want)
+      })
+
+      it( 'returns correct colors when reversed', {
+
+         # Reverse
+         got <- mapColors( x, binEnds=binEnds, reverse=TRUE, brewerPaletteName = 'Spectral' )
+         want <- c(colSet[4], colSet[3], colSet[3], colSet[2], colSet[1])
+         expect_equal(got, want)
+      })
+
+   })
+
+   describe( 'behavior with manually defined palette', {
+      x <- c(-100, -1, 0, 1, 1000)
+      binEnds = c(-Inf,-10,10,Inf)
+      colSet <- c('red', 'violet', 'blue')
+
+      it( 'returns correct colors', {
+         got <- mapColors( x, binEnds=binEnds, colors= colSet )
+         want <- c(colSet[1], colSet[2], colSet[2], colSet[2], colSet[3])
+         expect_equal(got, want)
+      })
+      it( 'returns correct colors when reversed', {
+         # Reverse
+         got <- mapColors( x, binEnds=binEnds, colors= colSet, reverse=TRUE )
+         want <- c(colSet[3], colSet[2], colSet[2], colSet[2], colSet[1])
+         expect_equal(got, want)
+      })
+   })
 })
 
