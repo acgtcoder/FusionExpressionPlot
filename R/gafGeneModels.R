@@ -157,7 +157,7 @@ test.is.safeFileName <- function() {
 #' Extract gene models from the GAF
 #'
 #' This extracts a tab delimited file of all canonical exon gene models from the
-#' TCGA gene annotation file or \acronym{GAF}. The cannonical model is intended to be at
+#' TCGA gene annotation file or \acronym{GAF}. The canonical model is intended to be at
 #' least a common starting point for a simplified definition of "the gene called
 #' X", based on the union of all transcript. By default each model in the output
 #' file (row) is uniquely identified by gene name.
@@ -206,7 +206,7 @@ test.is.safeFileName <- function() {
 #'      \code{$skipUnknownGene} \tab The \code{skipUnknownGene} parameter setting used.\cr
 #'      \code{$gaf_lines}       \tab The number of lines in the GAF.\cr
 #'      \code{$gaf_models}      \tab The number of models in the GAF. [Currently this
-#'         does not include unkown genes if \code{skipUnknownGene= TRUE}].\cr
+#'         does not include unknown genes if \code{skipUnknownGene= TRUE}].\cr
 #'      \code{$gaf_models_unique} \tab The number of unique models in the GAF. Will
 #'         be \code{NA} if \code{uniqueGene= FALSE}.\cr
 #'      \code{$gaf_extract}      \tab The output filename, based on the input GAF by default.\cr
@@ -228,7 +228,7 @@ test.is.safeFileName <- function() {
 #'   named genes.
 #'
 #'   The gene "SLC35E2" is present twice, but without a numbered annotation. By
-#'   default, only the larger (encompasing) version of "SLC35E2" is kept.
+#'   default, only the larger (encompassing) version of "SLC35E2" is kept.
 #'   If \code{uniqueGene= FALSE} is set, then both versions of this gene will be
 #'   kept, regardless of the \code{skipUnknownGene} setting.
 #
@@ -275,7 +275,7 @@ test.is.safeFileName <- function() {
 #'       Just letting you know an existing file is actually being overwritten.
 #'       This won't happen unless explicitly allowed by setting \code{force=
 #'       TRUE}). Having a warning allows distinguishing between the cases where
-#'       an overwrite occured vs those where one was allowed but did not occur.
+#'       an overwrite occurred vs those where one was allowed but did not occur.
 #'    }
 #'    \item{
 #'       \command{uniqueGene=TRUE sets skipUnknownGene=TRUE}
@@ -465,7 +465,7 @@ extractGeneModels <- function( gaf,
 #'       Just letting you know an existing file is actually being overwritten.
 #'       This won't happen unless explicitly allowed by setting \code{force=
 #'       TRUE}). Having a warning allows distinguishing between the cases where
-#'       an overwrite occured vs those where one was allowed but did not occur.
+#'       an overwrite occurred vs those where one was allowed but did not occur.
 #'    }
 #'    \item{
 #'       Various warnings from failed system commands
@@ -497,7 +497,7 @@ extractTranscriptModels <- function(
       if (! force) {
          stop( "Output file already exists; use force= TRUE to overwrite: \"", outFile, "\"")
       } else {
-         warning( "Forcing overwrite of output file \"", outFile, "\"");
+         warning( "Forcing overwrite of output file: \"", outFile, "\"");
          unlink(outFile);
       }
    }

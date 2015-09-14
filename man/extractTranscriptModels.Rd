@@ -89,7 +89,7 @@ names are unique.
       Just letting you know an existing file is actually being overwritten.
       This won't happen unless explicitly allowed by setting \code{force=
       TRUE}). Having a warning allows distinguishing between the cases where
-      an overwrite occured vs those where one was allowed but did not occur.
+      an overwrite occurred vs those where one was allowed but did not occur.
    }
    \item{
       Various warnings from failed system commands

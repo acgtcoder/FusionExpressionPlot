@@ -185,7 +185,7 @@ describe( "extractGeneModels()", {
             expect_false( file.exists( 'my.gaf' ))
          })
 
-      })
+      }) # END 'outfile='
 
       describe( "The 'force=' parameter", {
 
@@ -204,7 +204,7 @@ describe( "extractGeneModels()", {
          })
 
          it("returns the correct stats when force= TRUE", {
-            got <- extractGeneModels( testGaf )
+            got <- extractGeneModels( testGaf, force= TRUE )
 
             expect_is( got, "list")
             expect_equal( length(got), 11)
@@ -259,9 +259,10 @@ describe( "extractGeneModels()", {
             }
          })
 
-      })
+      }) # END: 'force='
 
       describe( "The 'uniqueGene=' and 'skipUnknownGene=' parameters", {
+
          it( "Ignores skipUnknownGene if uniqueGene=TRUE", {
 
             extractGeneModels( testGaf, uniqueGene= TRUE )
@@ -401,117 +402,222 @@ describe( "extractGeneModels()", {
                unlink( outputGeneModelsFile );
             }
          })
+
+      }) # END: 'uniqueGene=' and 'skipUnknownGene='
+
+   }) # END: The optional parameters
+
+}) # END: extractGeneModels()
+
+describe( "extractTranscriptModels()", {
+
+   testGaf <- 'data/mock.gaf'
+   testGafTranscripts <- 'data/mock.gaf.extract.transcriptModels'
+   testGafTranscriptsContentProxy <- tools::md5sum( testGafTranscripts )
+   outputTranscriptsFile <- paste0( testGaf, ".transcriptModels" )
+
+   describe( "Behavior with default parameters", {
+
+      it( "outputs correctly named file in same directory as the GAF?", {
+         extractTranscriptModels( testGaf )
+         expect_true( file.exists( outputTranscriptsFile ))
+
+         # Clean up after ourselves
+         if ( file.exists( outputTranscriptsFile )) {
+            unlink( outputTranscriptsFile );
+         }
       })
-   })
 
-})
+      it( "selects all gene records and only genes records from the GAF?", {
+         extractTranscriptModels( testGaf )
+         gotTranscriptsContentProxy <- tools::md5sum( outputTranscriptsFile )
+         # Need equivalent as md5 value named with filename.
+         expect_equivalent( gotTranscriptsContentProxy, testGafTranscriptsContentProxy )
 
-test_that( "extractTranscriptModels(); Generates correct default data file?", {
-   makesFile <- 'data/mock.gaf.transcriptModels'
-   extractTranscriptModels( 'data/mock.gaf' )
-   expect_true( file.exists( makesFile ))
-   expect_equivalent( tools::md5sum( 'data/expect.transcriptModels' ),
-                      tools::md5sum( makesFile )
-   )
-   # Clean up after ourselves
-   if ( file.exists( makesFile )) {
-      unlink( makesFile );
-   }
+         # Clean up after ourselves
+         if ( file.exists( outputTranscriptsFile )) {
+            unlink( outputTranscriptsFile );
+         }
+      })
 
-})
+      it("returns the correct value", {
+         got <- extractTranscriptModels( testGaf )
+         expect_equal( got, 4)
+         # Clean up after ourselves
+         if ( file.exists( outputTranscriptsFile )) {
+            unlink( outputTranscriptsFile );
+         }
+      })
 
-test_that( "extractTranscriptModels(); Correct error handling with default parameters?", {
+      describe("Errors with default parameters", {
 
-   makesFile <- 'data/mock.gaf.transcriptModels'
-   expect_error( extractTranscriptModels('noSuchFile.gaf'),
-                 "Can't find the specified GAF: \"noSuchFile.gaf\""
-   )
-   expect_false( file.exists( makesFile ))
+         it( "stops with error if can't find specified input GAF?", {
 
-   expect_error( extractTranscriptModels('my.gaf;ls'),
-                 'Unsafe character in GAF filename!'
-   )
-   expect_false( file.exists( makesFile ))
+            noSuchFile <- 'noSuchFile.gaf'
+            noSuchOutputFile <- paste0( testGaf, ".transcriptModels" )
 
-   extractTranscriptModels( 'data/mock.gaf' )
-   expect_true( file.exists( makesFile ))
-   expect_error( extractTranscriptModels( 'data/mock.gaf' ),
-                 "Output file already exists; use force= TRUE to overwrite: \"data/mock.gaf.transcriptModels\""
-   )
+            wantErrorRE <- paste0( "Can't find the specified GAF: \"", noSuchFile, "\"" )
+            expect_error( extractTranscriptModels( noSuchFile ), wantErrorRE )
+            expect_false( file.exists( noSuchOutputFile ))
+            expect_false( file.exists( outputTranscriptsFile ))
+         })
 
-   # Clean up after ourselves
-   if ( file.exists( makesFile )) {
-      unlink( makesFile );
-   }
+         it( "stops with error if input GAF filename is unsafe/hacking attempt?", {
+            # Only checks that some attempt to do this is implemented. Impossible
+            # to test this for completeness. [TODO - implement in pure R to avoid
+            # system call and need to test this here...]
 
-})
+            wantErrorRE <- 'Unsafe character in GAF filename!'
+            expect_error( extractTranscriptModels('my.gaf;ls'), wantErrorRE )
+            expect_false( file.exists( outputTranscriptsFile ))
+         })
 
-test_that( 'extractTrascriptModels() can specify output file?', {
-   makesFile <- 'data/deleteMe.transcriptModels'
-   extractTranscriptModels( 'data/mock.gaf', outFile= makesFile )
-   expect_true( file.exists( makesFile ))
-   expect_equivalent( tools::md5sum( 'data/expect.transcriptModels' ),
-                      tools::md5sum( makesFile )
-   )
-   # Clean up after ourselves
-   if ( file.exists( makesFile )) {
-      unlink( makesFile );
-   }
+         it( "stops with error if output file already exists.", {
+            extractTranscriptModels( testGaf )
+            expect_true( file.exists( outputTranscriptsFile ))
+            wantErrorRE <- paste0( "Output file already exists; ",
+                                   "use force= TRUE to overwrite: \"",
+                                   outputTranscriptsFile, "\""
+            )
+            expect_error( extractTranscriptModels( testGaf ), wantErrorRE )
 
-})
+            # Test the file wasn't corrupted during failed attempt to overwrite.
+            gotTranscriptsContentProxy <- tools::md5sum( outputTranscriptsFile )
+            expect_equivalent( gotTranscriptsContentProxy, testGafTranscriptsContentProxy )
 
-test_that( 'extractTranscriptModels() error handling with output file?', {
-   makesFile <- 'data/deleteMe.transcriptModels'
-   expect_error( extractTranscriptModels('noSuchFile.gaf', outFile= makesFile ),
-                 "Can't find the specified GAF: \"noSuchFile.gaf\""
-   )
-   expect_false( file.exists( makesFile ))
+            # Clean up after ourselves
+            if ( file.exists( outputTranscriptsFile )) {
+               unlink( outputTranscriptsFile );
+            }
+         })
 
-   expect_error( extractTranscriptModels('my.gaf;ls', outFile= makesFile ),
-                 'Unsafe character in GAF filename!'
-   )
-   expect_false( file.exists( makesFile ))
+      }) # END: Errors with default parameters
 
-   expect_error( extractTranscriptModels('data/mock.gaf', outFile= 'data/deleteMe;ls'),
-                 'Unsafe character in output transcriptModel filename!'
-   )
-   expect_false( file.exists( 'data/deleteMe;ls' ))
+   }) # END: Behavior with default parameters
 
-   extractTranscriptModels( 'data/mock.gaf', outFile= makesFile )
-   expect_true( file.exists( makesFile ))
-   expect_error( extractTranscriptModels( 'data/mock.gaf', outFile= makesFile ),
-                 "Output file already exists; use force= TRUE to overwrite: \"data/deleteMe.transcriptModels\""
-   )
+   describe( "The optional parameters", {
 
-   # Clean up after ourselves
-   if ( file.exists( makesFile )) {
-      unlink( makesFile );
-   }
+      describe( "The 'outfile=' parameter", {
 
-})
+         outFileName <- tempfile(
+            pattern = "FusionExpressionPlotTestDeleteMe",
+            tmpdir = tempdir(), fileext = ".transcriptModels"
+         )
 
-test_that( 'extractTranscriptModels() can overwrite output file?', {
-   makesFile <- 'data/mock.gaf.transcriptModels'
-   extractTranscriptModels( 'data/mock.gaf' )
-   expect_true( file.exists( makesFile ))
-   expect_warning( extractTranscriptModels( 'data/mock.gaf', force= TRUE ),
-                   "Forcing overwrite of output file \"data/mock.gaf.transcriptModels\""
-   )
-   expect_equivalent( tools::md5sum( 'data/expect.transcriptModels' ),
-                      tools::md5sum( makesFile )
-   )
-   # Clean up after ourselves
-   if ( file.exists( makesFile )) {
-      unlink( makesFile );
-   }
-})
+         it( 'determines output filename when specified', {
+            extractTranscriptModels( testGaf, outFile= outFileName )
+            expect_true( file.exists( outFileName ))
+            gotTranscriptsContentProxy <- tools::md5sum( outFileName )
+            expect_equivalent( gotTranscriptsContentProxy, testGafTranscriptsContentProxy )
 
-test_that( 'extractTranscriptModels() returns correct value', {
-   expected_return_value = 4;
-   makesFile <- 'data/mock.gaf.transcriptModels'
-   expect_equal( extractTranscriptModels( 'data/mock.gaf' ), 4)
-   # Clean up after ourselves
-   if ( file.exists( makesFile )) {
-      unlink( makesFile );
-   }
-})
+            # Clean up after ourselves
+            if ( file.exists( outFileName )) {
+               unlink( outFileName );
+            }
+         })
+
+         it("returns the correct stats", {
+            got <- extractTranscriptModels( testGaf, outFile= outFileName )
+
+            expect_equal( got, 4)
+
+            # Clean up after ourselves
+            if ( file.exists( outFileName )) {
+               unlink( outFileName );
+            }
+         })
+
+         it( 'stops with error if specified output filename exists', {
+            extractTranscriptModels( testGaf, outFile= outFileName )
+            expect_true( file.exists( outFileName ))
+            wantErrorRE <- paste0( "Output file already exists; ",
+                                   "use force= TRUE to overwrite: \"",
+                                   outFileName, "\""
+            )
+            expect_error( extractTranscriptModels( testGaf, outFile= outFileName ), wantErrorRE )
+
+            # Test the file wasn't corrupted during failed attempt to overwrite.
+            gotTranscriptsContentProxy <- tools::md5sum( outFileName )
+            expect_equivalent( gotTranscriptsContentProxy, testGafTranscriptsContentProxy )
+
+            # Clean up after ourselves
+            if ( file.exists( outFileName )) {
+               unlink( outFileName );
+            }
+         })
+
+         it( "stops with error if output filename is unsafe/hacking attempt?", {
+            # Only checks that some attempt to do this is implemented. Impossible
+            # to test this for completeness. [TODO - implement in pure R to avoid
+            # system call and need to test this here...]
+
+            wantErrorRE <- 'Unsafe character in output transcriptModel filename!'
+            expect_error( extractTranscriptModels(testGaf, outFile= 'my.gaf;ls'), wantErrorRE )
+            expect_false( file.exists( 'my.gaf' ))
+         })
+
+      }) # END: The 'outfile=' parameter
+
+      describe( "The 'force=' parameter", {
+
+         it( "overwrites with warning if output file exists and force= TRUE.", {
+            file.create( outputTranscriptsFile )
+            expect_true( file.exists( outputTranscriptsFile ))
+            expect_warning( extractTranscriptModels( testGaf, force= TRUE ),
+                            "Forcing overwrite of output file: \"data/mock.gaf.transcriptModels\""
+            )
+            gotTranscriptsContentProxy <- tools::md5sum( outputTranscriptsFile )
+            expect_equivalent( gotTranscriptsContentProxy, testGafTranscriptsContentProxy )
+
+            if ( file.exists( outputTranscriptsFile )) {
+               unlink( outputTranscriptsFile );
+            }
+         })
+
+         it("returns the correct stats when force= TRUE", {
+            got <- extractTranscriptModels( testGaf, force= TRUE )
+            expect_equal(got, 4)
+
+            # Clean up after ourselves
+            if ( file.exists( outputTranscriptsFile )) {
+               unlink( outputTranscriptsFile );
+            }
+         })
+
+         it( "stops with error if output file exists and force= FALSE.", {
+            extractTranscriptModels( testGaf )
+            expect_true( file.exists( outputTranscriptsFile ))
+            wantErrorRE <- paste0( "Output file already exists; ",
+                                   "use force= TRUE to overwrite: \"",
+                                   outputTranscriptsFile, "\""
+            )
+            expect_error( extractTranscriptModels( testGaf, force= FALSE ), wantErrorRE )
+
+            # Clean up after ourselves
+            if ( file.exists( outputTranscriptsFile )) {
+               unlink( outputTranscriptsFile );
+            }
+
+         })
+
+         it( "just output if file doesn't exists for force= TRUE or FALSE.", {
+
+            expect_false( file.exists( outputTranscriptsFile ))
+            extractTranscriptModels( testGaf, force= FALSE )
+            expect_true( file.exists( testGaf ))
+            if ( file.exists( outputTranscriptsFile )) {
+               unlink( outputTranscriptsFile );
+            }
+            expect_false( file.exists( outputTranscriptsFile ))
+            extractTranscriptModels( testGaf, force= TRUE )
+            expect_true( file.exists( outputTranscriptsFile ))
+            if ( file.exists( outputTranscriptsFile )) {
+               unlink( outputTranscriptsFile );
+            }
+         })
+
+      }) # END: The 'force=' parameter
+
+   }) # END: The optional parameters
+
+}) # END: extractTranscriptModels()
