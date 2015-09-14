@@ -2,18 +2,21 @@
 % Please edit documentation in R/gafGeneModels.R
 \name{extractTranscriptModels}
 \alias{extractTranscriptModels}
-\title{Extract transcript models from the gaf}
+\title{Extract transcript models from the GAF}
 \usage{
-extractTranscriptModels(gafFile, outFile = paste0(gafFile,
-  ".transcriptModels"), force = FALSE)
+extractTranscriptModels(gaf, outFile = paste0(gaf, ".transcriptModels"),
+  force = FALSE)
 }
 \arguments{
-\item{gafFile}{The full-path name of the GAF file [REQ]}
+\item{gaf}{The full-path name of the GAF [REQ]}
 
-\item{outFile}{The output file name, by default the same as the gafFile, with
-".geneModels" appended. Will not overwrite unless force= is set true}
+\item{outFile}{The output filename. By default will be the same as the
+  GAF, with ".transcriptModels" appended (hence it will be created in the same
+  directory by default). This will not overwrite an existing file unless
+  \code{force = TRUE}.}
 
-\item{force}{If the output file exists, overwrite (generates a warning).}
+\item{force}{If the output file exists, setting this \code{TRUE} will allow
+overwriting it. Doing so generates a warning.}
 }
 \value{
 The number of transcripts in the output file (should be 73,707)
@@ -21,6 +24,80 @@ The number of transcripts in the output file (should be 73,707)
 \description{
 This extracts a tab delimited file of all canonical transcript models from the
 GAF. Each model in the output file (row) can be refereed to
-uniquely by transcript name.
+uniquely by transcript name. This is much simpler than extracting genes
+}
+\details{
+This function is implemented using a unix system command and requires the
+"grep" program, so this only works on linux/mac systems. [TODO - reimplement
+in pure R.] The GAF version this works with is the version used for the
+TCGA RNAseq expression data files. It is available for download at the NCI
+uncompressed:
+\href{https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/outputs/TCGA.hg19.June2011.gaf}{TCGA.hg19.June2011.gaf}
+or gzipped:
+\href{https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF.hg19.June2011.bundle/outputs/TCGA.hg19.June2011.gaf.gz}{TCGA.hg19.June2011.gaf.gz}
+}
+\section{GAF transcript names}{
+
+
+Transcript names correspond to the UCSCgene.Dec2009 release. Transcript
+names are unique.
+}
+
+\section{Errors}{
+
+   These errors are fatal and will terminate processing.
+
+\describe{
+   \item{
+      \command{Unsafe character in GAF filename!}
+   }{
+      An invalid characters was passed as part of the GAF filename. This is
+      important as the filename is used in a system command as a parameter
+      and could be used for command injection.
+   }
+   \item{
+      \command{Can't find the specified GAF: "\var{file}"}
+   }{
+      The specified GAF doesn't seem to exist on the file system.
+      Probably have the name wrong or are using a relative name from the
+      wrong directory, but could also be that permissions are hiding it.
+   }
+   \item{
+      \command{Unsafe character in output transcriptModel filename!}
+   }{
+      An invalid characters was passed as part of the output filename. This
+      is important as the filename is used in a system command as a parameter
+      and could be used for command injection.
+   }
+   \item{
+      \command{Output file already exists; use force= TRUE to overwrite: "\var{file}"}
+   }{
+      The specified GAF transcript extract output file already exists. You
+      probably don't want to overwrite it. However, you can set \code{force=
+      TRUE} to allow this. It will still generate a warning.
+   }
+}
+}
+
+\section{Warnings}{
+
+
+\describe{
+   \item{
+      \command{Forcing overwrite of output file: "\var{file}"}
+   }{
+      Just letting you know an existing file is actually being overwritten.
+      This won't happen unless explicitly allowed by setting \code{force=
+      TRUE}). Having a warning allows distinguishing between the cases where
+      an overwrite occured vs those where one was allowed but did not occur.
+   }
+   \item{
+      Various warnings from failed system commands
+   }{
+      System commands are used for several things in this function. If they
+      fail, error messages are returned as warnings.
+   }
+
+}
 }
 

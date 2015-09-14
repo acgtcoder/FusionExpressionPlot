@@ -7,10 +7,10 @@
 loadGeneModels(file)
 }
 \arguments{
-\item{file}{The name of the gene models file extracted from the gaf file}
+\item{file}{The name of the gene models file extracted from the GAF}
 }
 \value{
-Data frame with the data from the gaf gene models:
+Data frame with the data from the GAF gene models:
 
       $gene = gene name
       $chr = chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS

@@ -2,15 +2,15 @@
 % Please edit documentation in R/gafGeneModels.R
 \name{loadGafModels}
 \alias{loadGafModels}
-\title{Load a gaf feature file into an exon data frame.}
+\title{Load a GAF feature file into an exon data frame.}
 \usage{
 loadGafModels(file)
 }
 \arguments{
-\item{file}{The name of the transcrpt models file extracted from the gaf file}
+\item{file}{The name of the transcrpt models file extracted from the GAF}
 }
 \value{
-Data frame with the data from the gaf transcrpt models:
+Data frame with the data from the GAF transcrpt models:
 /describe{
    {$gene}{gene name}
    {$chr}{chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS}
@@ -24,6 +24,6 @@ Data frame with the data from the gaf transcrpt models:
 }
 }
 \description{
-Load a gaf feature file into an exon data frame.
+Load a GAF feature file into an exon data frame.
 }
 
