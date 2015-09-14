@@ -2,28 +2,72 @@
 % Please edit documentation in R/gafGeneModels.R
 \name{loadGafModels}
 \alias{loadGafModels}
-\title{Load a GAF feature file into an exon data frame.}
+\title{Load a GAF models file into a per exon data frame.}
 \usage{
 loadGafModels(file)
 }
 \arguments{
-\item{file}{The name of the transcrpt models file extracted from the GAF}
+\item{file}{The file of models extracted from the GAF.}
 }
 \value{
-Data frame with the data from the GAF transcrpt models:
-/describe{
-   {$gene}{gene name}
-   {$chr}{chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS}
-   {$strand}{strand as *, +, or -}
-   {$gstart}{first base of gene}
-   {$gend}{last base of gene}
-   {$exon}{Exon number}
-   {$start}{first base of exon}
-   {$end}{Last base of exon}
-   {$length}{length of the exon in bases}
-}
+Returns a per-exon data frame of the models extracted from the GAF.
+  Most models (e.g. genes or transcripts) are composed of multiple exons with
+  each features-exon in separate row. For convenience, the table replicates a
+  lot of information that is the same for every exon in a model as a string,
+  i.e columns \code{gene}, \code{chr}, \code{strand}, \code{gstart}, and
+  \code{gend}).
+
+  The data frame contains the following columns
+  \tabular{ll}{
+     \code{gene}   \tab Feature name - gene name, transcript id, etc.\cr
+     \code{chr}    \tab Chromosome, as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS
+                        or possibly a contig name, like 'GL000228.1'.\cr
+     \code{strand} \tab Strand, as *, +, or -\cr
+     \code{gstart} \tab Genomic coordinate of first base of feature\cr
+     \code{gend}   \tab Genomic coordinate of last base of feature\cr
+     \code{exon}   \tab Exon number within feature\cr
+     \code{start}  \tab Genomic coordinate of first base of exon\cr
+     \code{end}    \tab Genomic coordinate of last base of exon\cr
+     \code{length} \tab length of the exon in bases\cr
+  }
 }
 \description{
-Load a GAF feature file into an exon data frame.
+Load a GAF models file into a per exon data frame.
+}
+\section{Todo}{
+
+  \itemize{
+     \item{change column named "gene" to "name"}
+     \item{add column "gafId"}
+     \item{consider an alias column with | separated names}
+     \item{change gstart and gend to mstart and mend}
+  }
+}
+
+\section{Errors}{
+
+   These errors are fatal and will terminate processing.
+
+   \describe{
+      \item{
+         \command{Can't find the specified GAF extract file: "\var{file}"}
+      }{
+         The specified GAF doesn't seem to exist on the file system.
+         Probably have the name wrong or are using a relative name from the
+         wrong directory, but could also be that permissions are hiding it.
+      }
+   }
+}
+\examples{
+\dontrun{
+
+extractGeneModels( 'TCGA.hg19.June2011.gaf' )
+gafGeneModelsFile <- 'TCGA.hg19.June2011.gaf.geneModels'
+geneExonsDF <- loadGafModels( gafTranscriptModelsFile )
+
+extractTranscriptModels( 'TCGA.hg19.June2011.gaf' )
+gafTranscriptModelsFile <- 'TCGA.hg19.June2011.gaf.transcriptModels'
+transcriptExonsDF <- loadGafModels( gafTranscriptModelsFile )
+}
 }
 

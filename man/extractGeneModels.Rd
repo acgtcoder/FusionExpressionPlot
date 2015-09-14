@@ -156,3 +156,38 @@ or gzipped:
 }
 }
 
+\section{Todo}{
+
+   \itemize{
+      \item{Add test for corner case - one exon gene}
+   }
+}
+\examples{
+\dontrun{
+
+# Extract gene models to the default output file
+stats <- extractGeneModels( 'path/to/GAF' )
+
+# Same, with all defaults made explicit
+stats <- extractGeneModels(
+   gaf= 'path/to/GAF', outFile= 'path/to/GAF.geneModels', force= FALSE,
+   uniqueGene= TRUE, skipUnknownGene= TRUE
+)
+
+# Extract gene models to gaf.genes in run directory
+stats <- extractGeneModels( 'path/to/GAF', outFile= 'gaf.genes' )
+
+# Overwrite outFile if it exists (here using the default name)
+stats <- extractGeneModels( 'path/to/GAF', force= TRUE )
+
+# Extract all gene models, including duplicates and unknowns.
+stats <- extractGeneModels(
+   gaf= 'path/to/GAF', uniqueGene= FALSE, skipUnknownGene= FALSE
+)
+
+# Extract all gene models except unknown (includes duplicates)
+stats <- extractGeneModels( gaf= 'path/to/GAF', uniqueGene= FALSE)
+)
+}
+}
+

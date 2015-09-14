@@ -12,15 +12,18 @@ loadGeneModels(file)
 \value{
 Data frame with the data from the GAF gene models:
 
-      $gene = gene name
-      $chr = chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS
-      $strand= strand as *, +, or -
-      $gstart=  first base of gene
-      $gend=  last base of gene
-      $exon= Exon number
-      $start= first base of exon
-      $end= Last base of exon
-      $length= length of the exon in bases
+  \tabular{ll}{
+      \code{$gene} \tab Feature name\cr
+      \code{$chr}  \tab chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS,
+                        or possibly a contig name, like 'GL000228.1'.\cr
+      \code{$strand} \tab strand as *, +, or -\cr
+      \code{$gstart} \tab first base of gene\cr
+      \code{$gend} \tab last base of gene\cr
+      \code{$exon} \tab Exon number\cr
+      \code{$start} \tab first base of exon\cr
+      \code{$end} \tab Last base of exon\cr
+      \code{$length} \tab length of the exon in bases\cr
+   }
 }
 \description{
 Load the gene models file into a data frame.

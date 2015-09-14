@@ -621,3 +621,435 @@ describe( "extractTranscriptModels()", {
    }) # END: The optional parameters
 
 }) # END: extractTranscriptModels()
+
+describe( "loadGafModels()", {
+
+   describe( "parameter validation", {
+      it("errors if file can't be found.", {
+         modelFile <- "noSuchFile.I.hope"
+         wantErrorRE <- paste0( "Can't find the specified GAF extract file: \"",
+                                modelFile, "\"")
+         expect_error( loadGafModels( modelFile ), wantErrorRE)
+      })
+   })
+   describe( "Loading a unique gene model file", {
+
+      modelFile <- 'data/mock.gaf.extract.geneModels'
+      geneExonCounts <- c(14, 27, 11, 2)
+      lastExonRows <- c(cumsum(geneExonCounts))
+      firstExonRows <- c(1,lastExonRows[1:length(geneExonCounts) - 1] + 1)
+      secondExonRows <- firstExonRows + 1
+
+      df <- loadGafModels( modelFile )
+
+      it( "is a data frame with correct columns and rows", {
+         wantClass <- 'data.frame'
+         expect_is(df, wantClass)
+
+         wantRowCount <- sum(geneExonCounts)
+         expect_equal( nrow(df), wantRowCount )
+
+         wantColNames <- c("gene", "chr", "strand", "gstart", "gend",
+                           "exon", "start", "end", "length")
+         expect_equal( colnames(df), wantColNames)
+
+      })
+
+      it( 'has the correct "per model" data', {
+         # gene, chr, strand, gstart, and gend are the same for all exons
+         # in each model
+
+         wantGene <- rep( c("TP53", "BRCA1", "SLC35E2", "SPANXB2"), geneExonCounts )
+         expect_equal( df$gene, wantGene)
+
+         wantChr <- rep( c("chr17", "chr17", "chr1", "chrX"), geneExonCounts )
+         expect_equal( df$chr, wantChr)
+
+         wantStrand <- rep( c("-", "-", "-", "+"), geneExonCounts )
+         expect_equal( df$strand, wantStrand)
+
+         wantGStart <- rep( c(7565097, 41196313, 1590990, 140084756), geneExonCounts )
+         expect_equal( df$gstart, wantGStart)
+
+         wantGEnd <- rep( c(7590863, 41322420, 1677431, 140085870), geneExonCounts )
+         expect_equal( df$gend, wantGEnd)
+      })
+
+      it( 'gets all exon numbers correct', {
+         # Exon numbers vary per
+         wantExon <- c( 1:geneExonCounts[1], 1:geneExonCounts[2],
+                        1:geneExonCounts[3], 1:geneExonCounts[4] )
+         expect_equal( df$exon, wantExon)
+      })
+
+      it( 'gets first, second, and last values correct for per-exon values', {
+         forRows <- c(firstExonRows[1], secondExonRows[1], lastExonRows[1])
+         wantStarts  <- c(7565097, 7569421, 7590695)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(7565332, 7569562, 7590863)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[2], secondExonRows[2], lastExonRows[2])
+         wantStarts  <- c(41196313, 41199660, 41322143)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(41197819, 41199720, 41322420)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[3], secondExonRows[3], lastExonRows[3])
+         wantStarts  <- c(1590990, 1592940, 1677163)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(1591572, 1597458, 1677431)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[4], secondExonRows[4], lastExonRows[4])
+         wantStarts  <- c(140084756, 140085596, 140085596)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(140084948, 140085870, 140085870)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+      })
+   }) # END: Unique gene model
+
+   describe( "Loading a gene model file with dups (no unknowns)", {
+
+      modelFile <- 'data/mock.gaf.extract.dupNoUnk.geneModels'
+
+      geneExonCounts <- c(14, 27, 3, 10, 11, 2, 2)
+      lastExonRows <- c(cumsum(geneExonCounts))
+      firstExonRows <- c(1,lastExonRows[1:length(geneExonCounts)-1] + 1)
+      secondExonRows <- firstExonRows + 1
+
+      df <- loadGafModels( modelFile )
+
+      it( "is a data frame with correct columns and rows", {
+         wantClass <- 'data.frame'
+         expect_is(df, wantClass)
+
+         wantRowCount <- sum(geneExonCounts)
+         expect_equal( nrow(df), wantRowCount )
+
+         wantColNames <- c("gene", "chr", "strand", "gstart", "gend",
+                           "exon", "start", "end", "length")
+         expect_equal( colnames(df), wantColNames)
+
+      })
+
+      it( 'has the correct "per model" data', {
+         # gene, chr, strand, gstart, and gend are the same for all exons
+         # in each model
+
+         wantGene <- rep( c("TP53", "BRCA1", "DUX4", "SLC35E2", "SLC35E2", "SPANXB2", "SPANXB2"), geneExonCounts )
+         expect_equal( df$gene, wantGene)
+
+         wantChr <- rep( c("chr17", "chr17", "GL000228.1", "chr1", "chr1", "chrX", "chrX"), geneExonCounts )
+         expect_equal( df$chr, wantChr)
+
+         wantStrand <- rep( c("-", "-", "+", "-", "-", "+", "+"), geneExonCounts )
+         expect_equal( df$strand, wantStrand)
+
+         wantGStart <- rep( c(7565097, 41196313, 95774, 1601214, 1590990, 140084756, 140096761), geneExonCounts )
+         expect_equal( df$gstart, wantGStart)
+
+         wantGEnd <- rep( c(7590863, 41322420, 97391, 1677431, 1677431, 140085870, 140097875), geneExonCounts )
+         expect_equal( df$gend, wantGEnd)
+      })
+
+      it( 'gets all exon numbers correct', {
+         # Exon numbers vary per
+         wantExon <- c( 1:geneExonCounts[1], 1:geneExonCounts[2],
+            1:geneExonCounts[3], 1:geneExonCounts[4], 1:geneExonCounts[5],
+            1:geneExonCounts[6], 1:geneExonCounts[7])
+         expect_equal( df$exon, wantExon)
+      })
+
+      it( 'gets first, second, and last values correct for per-exon values', {
+         forRows <- c(firstExonRows[1], secondExonRows[1], lastExonRows[1])
+         wantStarts  <- c(7565097, 7569421, 7590695)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(7565332, 7569562, 7590863)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[2], secondExonRows[2], lastExonRows[2])
+         wantStarts  <- c(41196313, 41199660, 41322143)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(41197819, 41199720, 41322420)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[3], secondExonRows[3], lastExonRows[3])
+         wantStarts  <- c(95774, 95787, 95937)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(95782, 95932, 97391)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[4], secondExonRows[4], lastExonRows[4])
+         wantStarts  <- c(1601214, 1602948, 1677163)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(1601590, 1603068, 1677431)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[5], secondExonRows[5], lastExonRows[5])
+         wantStarts  <- c(1590990, 1592940, 1677163)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(1591572, 1597458, 1677431)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[6], secondExonRows[6], lastExonRows[6])
+         wantStarts  <- c(140084756, 140085596, 140085596)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(140084948, 140085870, 140085870)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[7], secondExonRows[7], lastExonRows[7])
+         wantStarts  <- c(140096761, 140097601, 140097601)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(140096953, 140097875, 140097875)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+      })
+
+   }) # END: Dups gene model (no unk)
+
+   describe( "Loading a gene model file with dups (no unknowns)", {
+      modelFile <- 'data/mock.gaf.extract.dup.geneModels'
+      geneExonCounts <- c(14, 27, 3, 10, 11, 6, 6, 6, 2, 2)
+      lastExonRows <- c(cumsum(geneExonCounts))
+      firstExonRows <- c(1,lastExonRows[1:length(geneExonCounts)-1] + 1)
+      secondExonRows <- firstExonRows + 1
+
+      df <- loadGafModels( modelFile )
+
+      it( "is a data frame with correct columns and rows", {
+         wantClass <- 'data.frame'
+         expect_is(df, wantClass)
+
+         wantRowCount <- sum(geneExonCounts)
+         expect_equal( nrow(df), wantRowCount )
+
+         wantColNames <- c("gene", "chr", "strand", "gstart", "gend",
+                           "exon", "start", "end", "length")
+         expect_equal( colnames(df), wantColNames)
+      })
+
+      it( 'has the correct "per model" data', {
+         # gene, chr, strand, gstart, and gend are the same for all exons
+         # in each model
+
+         wantGene <- rep( c("TP53", "BRCA1", "DUX4", "SLC35E2", "SLC35E2",
+            "?", "?", "?", "SPANXB2", "SPANXB2"), geneExonCounts )
+         expect_equal( df$gene, wantGene)
+
+         wantChr <- rep( c("chr17", "chr17", "GL000228.1", "chr1", "chr1",
+            "chr9", "chr15", "chr15", "chrX", "chrX"), geneExonCounts )
+         expect_equal( df$chr, wantChr)
+
+         wantStrand <- rep( c("-", "-", "+", "-", "-", "+", "+", "+", "+", "+"),
+            geneExonCounts )
+         expect_equal( df$strand, wantStrand)
+
+         wantGStart <- rep( c(7565097, 41196313, 95774, 1601214, 1590990,
+               69425668,82647286,83023773,140084756, 140096761), geneExonCounts )
+         expect_equal( df$gstart, wantGStart)
+
+         wantGEnd <- rep( c(7590863, 41322420, 97391, 1677431, 1677431,
+            69448861, 82708202, 83084727, 140085870, 140097875), geneExonCounts )
+         expect_equal( df$gend, wantGEnd)
+      })
+
+      it( 'gets all exon numbers correct', {
+         # Exon numbers vary per
+         wantExon <- c( 1:geneExonCounts[1], 1:geneExonCounts[2],
+            1:geneExonCounts[3], 1:geneExonCounts[4], 1:geneExonCounts[5],
+            1:geneExonCounts[6], 1:geneExonCounts[7], 1:geneExonCounts[8],
+            1:geneExonCounts[9], 1:geneExonCounts[10])
+         expect_equal( df$exon, wantExon)
+      })
+
+      it( 'gets first, second, and last values correct for per-exon values', {
+         forRows <- c(firstExonRows[1], secondExonRows[1], lastExonRows[1])
+         wantStarts  <- c(7565097, 7569421, 7590695)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(7565332, 7569562, 7590863)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[2], secondExonRows[2], lastExonRows[2])
+         wantStarts  <- c(41196313, 41199660, 41322143)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(41197819, 41199720, 41322420)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[3], secondExonRows[3], lastExonRows[3])
+         wantStarts  <- c(95774, 95787, 95937)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(95782, 95932, 97391)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[4], secondExonRows[4], lastExonRows[4])
+         wantStarts  <- c(1601214, 1602948, 1677163)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(1601590, 1603068, 1677431)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[5], secondExonRows[5], lastExonRows[5])
+         wantStarts  <- c(1590990, 1592940, 1677163)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(1591572, 1597458, 1677431)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[6], secondExonRows[6], lastExonRows[6])
+         wantStarts  <- c(69425668, 69432635, 69448743)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(69425817, 69432764, 69448861)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[7], secondExonRows[7], lastExonRows[7])
+         wantStarts  <- c(82647286, 82692871, 82707733)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(82647542, 82692927, 82708202)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[8], secondExonRows[8], lastExonRows[8])
+         wantStarts  <- c(83023773, 83069396, 83084258)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(83024029, 83069452, 83084727)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[9], secondExonRows[9], lastExonRows[9])
+         wantStarts  <- c(140084756, 140085596, 140085596)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(140084948, 140085870, 140085870)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[10], secondExonRows[10], lastExonRows[10])
+         wantStarts  <- c(140096761, 140097601, 140097601)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(140096953, 140097875, 140097875)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+      })
+   }) # END: Dups gene model (no unk)
+
+   describe( "Loading a transcript model file", {
+      modelFile <- 'data/mock.gaf.extract.transcriptModels'
+      transcriptExonCounts <- c(2, 5, 7, 11)
+      lastExonRows <- c(cumsum(transcriptExonCounts))
+      firstExonRows <- c(1,lastExonRows[1:length(transcriptExonCounts)-1] + 1)
+      secondExonRows <- firstExonRows + 1
+
+      df <- loadGafModels( modelFile )
+
+      it( "is a data frame with correct columns and rows", {
+         wantClass <- 'data.frame'
+         expect_is(df, wantClass)
+
+         wantRowCount <- sum(transcriptExonCounts)
+         expect_equal( nrow(df), wantRowCount )
+
+         wantColNames <- c("gene", "chr", "strand", "gstart", "gend",
+                           "exon", "start", "end", "length")
+         expect_equal( colnames(df), wantColNames)
+      })
+
+      it( 'has the correct "per model" data', {
+         # gene, chr, strand, gstart, and gend are the same for all exons
+         # in each model
+
+         wantTranscript <- rep( c("uc001acb.1", "uc009vjs.1", "uc002gig.1", "uc002gim.2"),
+                          transcriptExonCounts )
+         expect_equal( df$gene, wantTranscript)
+
+         wantChr <- rep( c("chr1", "chr1", "chr17", "chr17"), transcriptExonCounts )
+         expect_equal( df$chr, wantChr)
+
+         wantStrand <- rep( c("+", "+", "-", "-"), transcriptExonCounts )
+         expect_equal( df$strand, wantStrand)
+
+         wantGStart <- rep( c(896829, 995083, 7565097, 7571720), transcriptExonCounts )
+         expect_equal( df$gstart, wantGStart)
+
+         wantGEnd <- rep( c(897858, 997436, 7579937, 7590863), transcriptExonCounts )
+         expect_equal( df$gend, wantGEnd)
+      })
+
+      it( 'gets all exon numbers correct', {
+         # Exon numbers vary per
+         wantExon <- c( 1:transcriptExonCounts[1], 1:transcriptExonCounts[2],
+                        1:transcriptExonCounts[3], 1:transcriptExonCounts[4] )
+         expect_equal( df$exon, wantExon)
+      })
+
+      it( 'gets first, second, and last values correct for per-exon values', {
+         forRows <- c(firstExonRows[1], secondExonRows[1], lastExonRows[1])
+         wantStarts  <- c(896829, 897206, 897206)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(897130, 897858, 897858)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[2], secondExonRows[2], lastExonRows[2])
+         wantStarts  <- c(995083, 995657, 997229)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(995162, 995773, 997436)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[3], secondExonRows[3], lastExonRows[3])
+         wantStarts  <- c(7565097, 7577499, 7579839)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(7565332, 7577608, 7579937)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+
+         forRows <- c(firstExonRows[4], secondExonRows[4], lastExonRows[4])
+         wantStarts  <- c(7571720, 7573927, 7590695)
+         expect_equal( df$start[forRows], wantStarts )
+         wantEnds    <- c(7573008, 7574033, 7590863)
+         expect_equal( df$end[forRows], wantEnds )
+         wantLengths <- abs(wantStarts-wantEnds) + 1
+         expect_equal( df$length[forRows], wantLengths )
+      })
+
+   }) # END: transcript model
+
+}) # END: loadGafModels()

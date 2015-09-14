@@ -295,6 +295,39 @@ test.is.safeFileName <- function() {
 #'
 #' }
 #'
+#' @section Todo:
+#'    \itemize{
+#'       \item{Add test for corner case - one exon gene}
+#'    }
+#'
+#' @examples
+#' \dontrun{
+#'
+#' # Extract gene models to the default output file
+#' stats <- extractGeneModels( 'path/to/GAF' )
+#'
+#' # Same, with all defaults made explicit
+#' stats <- extractGeneModels(
+#'    gaf= 'path/to/GAF', outFile= 'path/to/GAF.geneModels', force= FALSE,
+#'    uniqueGene= TRUE, skipUnknownGene= TRUE
+#' )
+#'
+#' # Extract gene models to gaf.genes in run directory
+#' stats <- extractGeneModels( 'path/to/GAF', outFile= 'gaf.genes' )
+#'
+#' # Overwrite outFile if it exists (here using the default name)
+#' stats <- extractGeneModels( 'path/to/GAF', force= TRUE )
+#'
+#' # Extract all gene models, including duplicates and unknowns.
+#' stats <- extractGeneModels(
+#'    gaf= 'path/to/GAF', uniqueGene= FALSE, skipUnknownGene= FALSE
+#' )
+#'
+#' # Extract all gene models except unknown (includes duplicates)
+#' stats <- extractGeneModels( gaf= 'path/to/GAF', uniqueGene= FALSE)
+#' )
+#' }
+#'
 #' @export
 extractGeneModels <- function( gaf,
                                outFile= paste0(gaf, ".geneModels"), force= FALSE,
@@ -476,6 +509,29 @@ extractGeneModels <- function( gaf,
 #'
 #' }
 #'
+#' @section Todo:
+#'    \itemize{
+#'       \item{Add test for corner case - one exon transcript}
+#'    }
+#'
+#' @examples
+#' \dontrun{
+#'
+#' # Extract transcripts to default output file
+#' count <- extractTranscriptModels( 'path/to/GAF' )
+#'
+#' # Same, with all defaults made explicit
+#' count <- extractTranscriptModels(
+#'    gaf= 'path/to/GAF', outFile= 'path/to/GAF.transcriptModels', force= FALSE
+#' )
+#'
+#' # Extract transcripts to gaf.transcripts in run directory
+#' count <- extractTranscriptModels( 'path/to/GAF', 'gaf.transcripts' )
+#'
+#' # Overwrite outFile if it exists (here using the default name)
+#' count <- extractTranscriptModels( 'path/to/GAF', force= TRUE )
+#' }
+#'
 #' @export
 extractTranscriptModels <- function(
    gaf,
@@ -529,68 +585,119 @@ extractTranscriptModels <- function(
 #'
 #' @return Data frame with the data from the GAF gene models:
 #'
-#'       $gene = gene name
-#'       $chr = chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS
-#'       $strand= strand as *, +, or -
-#'       $gstart=  first base of gene
-#'       $gend=  last base of gene
-#'       $exon= Exon number
-#'       $start= first base of exon
-#'       $end= Last base of exon
-#'       $length= length of the exon in bases
+#'   \tabular{ll}{
+#'       \code{$gene} \tab Feature name\cr
+#'       \code{$chr}  \tab chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS,
+#'                         or possibly a contig name, like 'GL000228.1'.\cr
+#'       \code{$strand} \tab strand as *, +, or -\cr
+#'       \code{$gstart} \tab first base of gene\cr
+#'       \code{$gend} \tab last base of gene\cr
+#'       \code{$exon} \tab Exon number\cr
+#'       \code{$start} \tab first base of exon\cr
+#'       \code{$end} \tab Last base of exon\cr
+#'       \code{$length} \tab length of the exon in bases\cr
+#'    }
 #'
 #' @export
 loadGeneModels <- function ( file ) {
-
-   geneModelData <- read.delim( file, stringsAsFactors = FALSE );
-
-   allGenes <- sub("[|].+$", "", geneModelData$Gene);
-   chr <- sub(":.+:[-+]", "", geneModelData$CompositeCoordinates);
-   exons <- sub( "^.+:", "", sub( ":[-+]$", "", geneModelData$CompositeCoordinates ));
-   gstart <- sub("-.+","", exons);
-   gend <- sub(".+[-]","", exons);
-   exons <- strsplit(exons,",")
-   strand <- sub("^.+:.+:","", geneModelData$CompositeCoordinates);
-   getStartsF <- function(x) {sub("-.+$", "", x )}
-   getEndsF <- function(x) {sub("^[^-]+-", "", x )}
-   getNumF <- function(x) {1:length(x)}
-   modelsMatrix <- do.call( rbind, mapply( cbind,
-                                           allGenes, chr, strand, gstart, gend, lapply( exons, getNumF ), lapply( exons, getStartsF ), lapply( exons, getEndsF )
-   ));
-   geneModels <- data.frame(
-      gene= modelsMatrix[,1],
-      chr= modelsMatrix[,2],
-      strand= modelsMatrix[,3],
-      gstart=  as.integer(modelsMatrix[,4]),
-      gend=  as.integer(modelsMatrix[,5]),
-      exon= as.integer(modelsMatrix[,6]),
-      start= as.integer(modelsMatrix[,7]),
-      end= as.integer(modelsMatrix[,8]),
-      stringsAsFactors= FALSE
-   );
-   geneModels$length <- as.integer(geneModels$end - geneModels$start + 1);
-
-   return(geneModels);
+   .Deprecated(loadGafModels)
+   return(loadGafModels(file))
+#    geneModelData <- read.delim( file, stringsAsFactors = FALSE );
+#
+#    allGenes <- sub("[|].+$", "", geneModelData$Gene);
+#    chr <- sub(":.+:[-+]", "", geneModelData$CompositeCoordinates);
+#    exons <- sub( "^.+:", "", sub( ":[-+]$", "", geneModelData$CompositeCoordinates ));
+#    gstart <- sub("-.+","", exons);
+#    gend <- sub(".+[-]","", exons);
+#    exons <- strsplit(exons,",")
+#    strand <- sub("^.+:.+:","", geneModelData$CompositeCoordinates);
+#    getStartsF <- function(x) {sub("-.+$", "", x )}
+#    getEndsF <- function(x) {sub("^[^-]+-", "", x )}
+#    getNumF <- function(x) {1:length(x)}
+#    modelsMatrix <- do.call( rbind, mapply( cbind,
+#                                            allGenes, chr, strand, gstart, gend, lapply( exons, getNumF ), lapply( exons, getStartsF ), lapply( exons, getEndsF )
+#    ));
+#    geneModels <- data.frame(
+#       gene= modelsMatrix[,1],
+#       chr= modelsMatrix[,2],
+#       strand= modelsMatrix[,3],
+#       gstart=  as.integer(modelsMatrix[,4]),
+#       gend=  as.integer(modelsMatrix[,5]),
+#       exon= as.integer(modelsMatrix[,6]),
+#       start= as.integer(modelsMatrix[,7]),
+#       end= as.integer(modelsMatrix[,8]),
+#       stringsAsFactors= FALSE
+#    );
+#    geneModels$length <- as.integer(geneModels$end - geneModels$start + 1);
+#
+#    return(geneModels);
 }
 
-#' Load a GAF feature file into an exon data frame.
+#' Load a GAF models file into a per exon data frame.
 #'
-#' @param file The name of the transcrpt models file extracted from the GAF
+#' @param file The file of models extracted from the GAF.
 #'
-#' @return Data frame with the data from the GAF transcrpt models:
-#' /describe{
-#'    {$gene}{gene name}
-#'    {$chr}{chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS}
-#'    {$strand}{strand as *, +, or -}
-#'    {$gstart}{first base of gene}
-#'    {$gend}{last base of gene}
-#'    {$exon}{Exon number}
-#'    {$start}{first base of exon}
-#'    {$end}{Last base of exon}
-#'    {$length}{length of the exon in bases}
+#' @return Returns a per-exon data frame of the models extracted from the GAF.
+#'   Most models (e.g. genes or transcripts) are composed of multiple exons with
+#'   each features-exon in separate row. For convenience, the table replicates a
+#'   lot of information that is the same for every exon in a model as a string,
+#'   i.e columns \code{gene}, \code{chr}, \code{strand}, \code{gstart}, and
+#'   \code{gend}).
+#'
+#'   The data frame contains the following columns
+#'   \tabular{ll}{
+#'      \code{gene}   \tab Feature name - gene name, transcript id, etc.\cr
+#'      \code{chr}    \tab Chromosome, as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS
+#'                         or possibly a contig name, like 'GL000228.1'.\cr
+#'      \code{strand} \tab Strand, as *, +, or -\cr
+#'      \code{gstart} \tab Genomic coordinate of first base of feature\cr
+#'      \code{gend}   \tab Genomic coordinate of last base of feature\cr
+#'      \code{exon}   \tab Exon number within feature\cr
+#'      \code{start}  \tab Genomic coordinate of first base of exon\cr
+#'      \code{end}    \tab Genomic coordinate of last base of exon\cr
+#'      \code{length} \tab length of the exon in bases\cr
+#'   }
+#'
+#' @section Todo:
+#'   \itemize{
+#'      \item{change column named "gene" to "name"}
+#'      \item{add column "gafId"}
+#'      \item{consider an alias column with | separated names}
+#'      \item{change gstart and gend to mstart and mend}
+#'   }
+#'
+#' @section Errors:
+#'    These errors are fatal and will terminate processing.
+#'
+#'    \describe{
+#'       \item{
+#'          \command{Can't find the specified GAF extract file: "\var{file}"}
+#'       }{
+#'          The specified GAF doesn't seem to exist on the file system.
+#'          Probably have the name wrong or are using a relative name from the
+#'          wrong directory, but could also be that permissions are hiding it.
+#'       }
+#'    }
+#'
+#' @examples
+#'
+#' \dontrun{
+#'
+#' extractGeneModels( 'TCGA.hg19.June2011.gaf' )
+#' gafGeneModelsFile <- 'TCGA.hg19.June2011.gaf.geneModels'
+#' geneExonsDF <- loadGafModels( gafTranscriptModelsFile )
+#'
+#' extractTranscriptModels( 'TCGA.hg19.June2011.gaf' )
+#' gafTranscriptModelsFile <- 'TCGA.hg19.June2011.gaf.transcriptModels'
+#' transcriptExonsDF <- loadGafModels( gafTranscriptModelsFile )
 #' }
+#'
 #' @export
 loadGafModels <- function ( file ) {
+
+   if (! file.exists(file)) {
+      stop( "Can't find the specified GAF extract file: \"", file, "\"")
+   }
 
    df <- read.delim( file, stringsAsFactors = FALSE );
 

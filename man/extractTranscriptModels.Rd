@@ -101,3 +101,28 @@ names are unique.
 }
 }
 
+\section{Todo}{
+
+   \itemize{
+      \item{Add test for corner case - one exon transcript}
+   }
+}
+\examples{
+\dontrun{
+
+# Extract transcripts to default output file
+count <- extractTranscriptModels( 'path/to/GAF' )
+
+# Same, with all defaults made explicit
+count <- extractTranscriptModels(
+   gaf= 'path/to/GAF', outFile= 'path/to/GAF.transcriptModels', force= FALSE
+)
+
+# Extract transcripts to gaf.transcripts in run directory
+count <- extractTranscriptModels( 'path/to/GAF', 'gaf.transcripts' )
+
+# Overwrite outFile if it exists (here using the default name)
+count <- extractTranscriptModels( 'path/to/GAF', force= TRUE )
+}
+}
+
