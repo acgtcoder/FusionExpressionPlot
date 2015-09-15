@@ -1,22 +1,4 @@
 
-
-# Given a file of sample names, returns those names as a vector
-getSampleCohort <- function( file ) {
-   ###
-   #     PARAM: file= (string) A file of samples names, one per line. Blank and
-   # lines starting with "#" are ignored.
-   ###
-   #     RETURNS: Vector of sample names
-   ###
-
-   samples <- scan( file, what= character(0), comment.char= "#" );
-   if (any(duplicated(samples))) {
-      stop("Sample file may not contain duplicates: ", file, "\nDuplicated: ",
-           paste( samples[duplicated( samples )], collapse=", " ));
-   }
-   return( samples );
-}
-
 # Read file of sample, data file name and return a data frame containing those
 # samples given in "samples".
 getCohortFiles <- function ( file, samples) {
