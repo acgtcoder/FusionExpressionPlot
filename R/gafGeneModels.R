@@ -526,14 +526,3 @@ loadGafModels <- function ( file ) {
 
    return(geneModels);
 }
-
-# Get the list of all gene names in the model data frame
-getAllGeneNames <-function( geneModelsDF ) {
-   ###
-   #     PARAM geneModelsDF the data frame returned by laodGeneModels
-   ###
-   #     Returns a vector of gene names (guaranteed to be unique, even if
-   # repeated in the data frame.
-   ###
-   return(unique(geneModelsDF$gene));
-}
