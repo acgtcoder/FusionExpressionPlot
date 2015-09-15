@@ -424,59 +424,6 @@ extractTranscriptModels <- function(
    return(lineCount - 1);
 }
 
-#' Load the gene models file into a data frame.
-#'
-#' @param file The name of the gene models file extracted from the GAF
-#'
-#' @return Data frame with the data from the GAF gene models:
-#'
-#'   \tabular{ll}{
-#'       \code{$gene} \tab Feature name\cr
-#'       \code{$chr}  \tab chromosome as chr#, chr##, chrX, chrY, chrM, or chrM_rCRS,
-#'                         or possibly a contig name, like 'GL000228.1'.\cr
-#'       \code{$strand} \tab strand as *, +, or -\cr
-#'       \code{$gstart} \tab first base of gene\cr
-#'       \code{$gend} \tab last base of gene\cr
-#'       \code{$exon} \tab Exon number\cr
-#'       \code{$start} \tab first base of exon\cr
-#'       \code{$end} \tab Last base of exon\cr
-#'       \code{$length} \tab length of the exon in bases\cr
-#'    }
-#'
-#' @export
-loadGeneModels <- function ( file ) {
-   .Deprecated(loadGafModels)
-   return(loadGafModels(file))
-#    geneModelData <- read.delim( file, stringsAsFactors = FALSE );
-#
-#    allGenes <- sub("[|].+$", "", geneModelData$Gene);
-#    chr <- sub(":.+:[-+]", "", geneModelData$CompositeCoordinates);
-#    exons <- sub( "^.+:", "", sub( ":[-+]$", "", geneModelData$CompositeCoordinates ));
-#    gstart <- sub("-.+","", exons);
-#    gend <- sub(".+[-]","", exons);
-#    exons <- strsplit(exons,",")
-#    strand <- sub("^.+:.+:","", geneModelData$CompositeCoordinates);
-#    getStartsF <- function(x) {sub("-.+$", "", x )}
-#    getEndsF <- function(x) {sub("^[^-]+-", "", x )}
-#    getNumF <- function(x) {1:length(x)}
-#    modelsMatrix <- do.call( rbind, mapply( cbind,
-#                                            allGenes, chr, strand, gstart, gend, lapply( exons, getNumF ), lapply( exons, getStartsF ), lapply( exons, getEndsF )
-#    ));
-#    geneModels <- data.frame(
-#       gene= modelsMatrix[,1],
-#       chr= modelsMatrix[,2],
-#       strand= modelsMatrix[,3],
-#       gstart=  as.integer(modelsMatrix[,4]),
-#       gend=  as.integer(modelsMatrix[,5]),
-#       exon= as.integer(modelsMatrix[,6]),
-#       start= as.integer(modelsMatrix[,7]),
-#       end= as.integer(modelsMatrix[,8]),
-#       stringsAsFactors= FALSE
-#    );
-#    geneModels$length <- as.integer(geneModels$end - geneModels$start + 1);
-#
-#    return(geneModels);
-}
 
 #' Load a GAF models file into a per exon data frame.
 #'
