@@ -1,23 +1,195 @@
 
-# Read file of sample, data file name and return a data frame containing those
-# samples given in "samples".
-getCohortFiles <- function ( file, samples) {
-   ###
-   #     PARAM: file= (string) A file with one row per sample. at least one
-   # column and a header line. The first coloumn must contain sample names
-   # (mathcing sample). The remaining columns should contain the full path file
-   # name of the data files. Columns should be tab separated.
-   #     PARAM: samples= (character vec) A vector of strings giving the sample
-   # names to extract rows from the list for
-   ###
-   #     RETURNS: A data frame with one column for eacn column in the input file
-   # and one row for each row in the data file matching a sample name in the
-   # samples list.
-   ###
-   allDataFile <- read.delim( file, stringsAsFactors=FALSE );
-   select <- allDataFile[,1] %in% samples
-   cohortDataFiles <- allDataFile[select,];
-   return( cohortDataFiles );
+#' Read in the cohort definition file
+#'
+#' Creates a data frame from a tab-delimited file with a header describing a
+#' sample cohort. The cohort file must specify at minimum the sample and
+#' associated exon expression file. Allows selecting which columns are which and
+#' also only selecting a subset of the samples to keep. Will skip comment lines.
+#'
+#' @param file The name of the cohort file to read in (tab-delimited with
+#'   header)
+#'
+#' @param samples The list of samples to read in, as a string vector. The rows
+#'   matching these are the only ones read in. By default, this is set to
+#'   \code{NULL}, meaning it reads all the samples. If any sample in the
+#'   provided list is not found, a warning will be generated. Must match exactly
+#'   (case sensitive).
+#'
+#' @param columns The names of the columns to read the sample name and exon
+#'   expression filename from. By default this is \code{c("sample",
+#'   "exonExpressionFile")} If provided, must specify both, and must match
+#'   exactly (case sensitive).
+#'
+#' @param dataRoot A directory to prepended to the \code{exonExpressionFile}
+#'   filenames. By default this is \code{NULL} and nothing is prepended. It is
+#'   ok if \code{dataRoot} does not exist at this time as the file locations are
+#'   not verified at this point, but \code{NA} and empty strings \code{""} are
+#'   ignored.
+#'
+#' @param comment.char The character starting comment lines, by default
+#'   \code{'#'}. Must be a single character. Any line begining with this
+#'   character is considered to be a comment line and is ignored. Must be the
+#'   first character in a line (no leading white space is allowed). Set to the
+#'   empty string, \code{""}, to skip comment line filtering.
+#'
+#' @return A data frame with two columns:
+#'
+#' \tabular{ll}{
+#'    \code{sample}
+#'       \tab The sample names read from the file, by default from the
+#'             \code{sample} column\cr
+#'   \code{exonExpressionFile}
+#'       \tab The exon expression file names as read from the file, by default
+#'             from the \code{exonExpressionFile} column\cr
+#' }
+#'
+#' @section Errors:
+#'
+#' \describe{
+#'    \item{
+#'       \command{Can't find the cohort definition file: \var{file}}
+#'    }{
+#'       The file you are trying to read in can't be found - case, permission,
+#'       relative directory, and misspellings are all possible reasons.
+#'    }
+#'    \item{
+#'       \command{Columns must use strings for names.}
+#'    }{
+#'       You specified something other than a string when setting the
+#'       \code{columns} parameter. Perhaps you need something like \code{"1"}
+#'       instead of \code{1}.
+#'    }
+#'    \item{
+#'       \command{Must specify both the sample and exonExpressionColumn headers}
+#'    }{
+#'       You can't specify only one of these and expect the other to be the
+#'       default. You have to specify both.
+#'    }
+#'    \item{
+#'       \command{Columns must specify non-empty strings for column names}
+#'    }{
+#'       Can't specify an empty string as a column heading. What are you trying
+#'       to do? This must be a real column heading from your file that can be
+#'       used to identify the column after being read in.
+#'    }
+#'    \item{
+#'       \command{May not specify the same column for sample and exonExpressionFile data}
+#'    }{
+#'       Why would you use the same heading for both needed columns? Don't do that.
+#'    }
+#'    \item{
+#'       \command{The cohort file has no sample column \var{sample}}
+#'    }{
+#'       You have to identify which column in the cohort file can be used as
+#'       sample names
+#'    }
+#'    \item{
+#'       \command{The cohort file has no exon expression file column
+#'          \var{exonExpressionColumn}}
+#'    }{
+#'       You have to identify which column in the cohort file has the file names
+#'       for the exon expression data.
+#'    }
+#'    \item{
+#'       \command{The cohort file can not contains duplicate samples}
+#'    }{
+#'       The cohort file contains multiple lines with the same sample name, even
+#'       after filtering out any samples you didn't want considered. That's not
+#'       ok.
+#'    }
+#'    \item{
+#'       \command{The cohort file can not contain duplicate cohort expression files}
+#'    }{
+#'       The cohort file contains multiple lines with the same cohort expression
+#'       file name, even after filtering out any samples you didn't want
+#'       considered. That's not ok. If two different samples really have the
+#'       same expression file name, you'll have to put them in different
+#'       directories.
+#'    }
+#' }
+#'
+#' @section Warnings:
+#'
+#' \describe{
+#'    \item{
+#'       \command{Duplicates in "samples" parameter filter list ignored}
+#'    }{
+#'       The list of samples you provided to filter the cohort data frame by
+#'       contained the same sample name more than once. You can only include
+#'       a sample once, so the duplicates are just ignored. Warning you allows
+#'       this to be changed for future use (if you care).
+#'    }
+#'    \item{
+#'       \command{Ignoring missing samples specified in the "samples" parameter
+#'                list: \var{sample, sample,...}}
+#'    }{
+#'       The list of samples you provided to filter the cohort data frame
+#'       contained sample names that were not actually in the cohort file.
+#'       Perhaps you should double check your cohort file?
+#'    }
+#'}
+#'
+#' @export
+loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
+   columns= c("sample", "exonExpressionFile"), dataRoot= NULL ) {
+
+   if (! file.exists(file)) {
+      stop("Can't find the cohort definition file: ", file)
+   }
+
+   if (! is.null(samples)) {
+      if (anyDuplicated(samples)) {
+         samples <- unique(samples)
+         warning( "Duplicates in \"samples\" parameter filter list ignored" )
+      }
+   }
+
+   if (! is.null(dataRoot) ) {
+      if (is.na(dataRoot) || dataRoot == "") {
+         dataRoot <- NULL
+      }
+   }
+
+   if (! class(columns) == 'string') {
+      stop ("Columns must use strings for names.")
+   } else if (length(columns) != 2) {
+      stop ("Must specify both the sample and exonExpressionColumn headers")
+   } else if (nchar(columns[1]) < 1 || nchar(columns[2]) < 1) {
+      stop( "Columns must specify non-empty strings for column names")
+   } else if (columns[1] != columns[2]) {
+      stop("May not specify the same column for sample and exonExpressionFile data")
+   }
+
+   df <- read.delim(
+      file, comment.char= comment.char, stringsAsFactors= FALSE
+   )
+
+   cohortHeadings <- names(df)
+   if (! columns[1] %in% cohortHeadings) {
+      stop("The cohort file has no sample column", columns[1])
+   }
+   if (! columns[2] %in% cohortHeadings) {
+      stop("The cohort file has no exonExpressionFile column", columns[2])
+   }
+
+   if (! is.null(samples)) {
+      samplesFound <- samples %in% df[,columns[1]]
+      if (! all(samplesFound)) {
+         missing <- samples[ ! samplesFound]
+         missing <- paste(missing, collapase= ", ")
+         warning( "Ignoring missing samples specified in the \"samples\" parameter list:\n",
+                  missing )
+      }
+      df <- df[columns[1] %in% samples, ]
+   }
+
+   if (anyDuplicated(df[,columns[1]])) {
+      stop( "The cohort file can not contains duplicate samples")
+   }
+   if (anyDuplicated(df[,columns[2]])) {
+      stop( "The cohort file can not contain duplicate cohort expression files")
+   }
+   return( df );
 }
 
 # Loads an exon expression data file column as a data frame
