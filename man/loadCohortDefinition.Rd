@@ -35,7 +35,8 @@ loadCohortDefinition(file, samples = NULL, comment.char = "#",
   ignored.}
 }
 \value{
-A data frame with two columns:
+A data frame representing the sample cohort with at least two
+  columns:
 
 \tabular{ll}{
    \code{sample}

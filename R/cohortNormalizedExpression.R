@@ -217,8 +217,8 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
    if (anyDuplicated(df[,columns[2]])) {
       stop( "The cohort file can not contain duplicate cohort expression files")
    }
-   if (anyNA(df[,columns[1]]) || any(nchar(df[,columns[1]]) < 1)
-       || anyNA(df[,columns[2]]) || any(nchar(df[,columns[2]]) < 1)) {
+   if (any(is.na(df[,columns[1]])) || any(nchar(df[,columns[1]]) < 1)
+       || any(is.na(df[,columns[2]])) || any(nchar(df[,columns[2]]) < 1)) {
       stop("All sample and exon expression file entries must be non-empty text")
    }
 
