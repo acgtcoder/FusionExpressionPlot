@@ -2,7 +2,7 @@
 % Please edit documentation in R/cohortNormalizedExpression.R
 \name{loadCohortDefinition}
 \alias{loadCohortDefinition}
-\title{Read in the cohort definition}
+\title{Read in the cohort definition file}
 \usage{
 loadCohortDefinition(file, samples = NULL, comment.char = "#",
   columns = c("sample", "exonExpressionFile"), dataRoot = NULL)
@@ -11,17 +11,17 @@ loadCohortDefinition(file, samples = NULL, comment.char = "#",
 \item{file}{The name of the cohort file to read in (tab-delimited with
   header)}
 
-\item{samples}{The list of samples to read in, as a string vector. The rows
+\item{samples}{The list of samples to read in, as a character vector. The rows
   matching these are the only ones read in. By default, this is set to
   \code{NULL}, meaning it reads all the samples. If any sample in the
   provided list is not found, a warning will be generated. Must match exactly
   (case sensitive).}
 
 \item{comment.char}{The character starting comment lines, by default
-  \code{'#'}. Must be a single character. Any line begining with this
+  \code{'#'}. Must be a single character. Any line beginning with this
   character is considered to be a comment line and is ignored. Must be the
   first character in a line (no leading white space is allowed). Set to the
-  empty string, \code{""}, to skip comment line filtering.}
+  empty text, \code{""}, to skip comment line filtering.}
 
 \item{columns}{The names of the columns to read the sample name and exon
   expression filename from. By default this is \code{c("sample",
@@ -31,7 +31,7 @@ loadCohortDefinition(file, samples = NULL, comment.char = "#",
 \item{dataRoot}{A directory to prepended to the \code{exonExpressionFile}
   filenames. By default this is \code{NULL} and nothing is prepended. It is
   ok if \code{dataRoot} does not exist at this time as the file locations are
-  not verified at this point, but \code{NA} and empty strings \code{""} are
+  not verified at this point, but \code{NA} and empty text \code{""} are
   ignored.}
 }
 \value{
@@ -49,8 +49,10 @@ A data frame with two columns:
 \description{
 Creates a data frame from a tab-delimited file with a header describing a
 sample cohort. The cohort file must specify at minimum the sample and
-associated exon expression file. Allows selecting which columns are which and
-also only selecting a subset of the samples to keep. Will skip comment lines.
+associated exon expression file. Allows selecting which columns are which.
+Also allows selecting a subset of the samples to keep. Will skip comment
+lines. All columns from the cohort file are loaded, but only the sample and
+exonExpressionFile columns are validated.
 }
 \section{Errors}{
 
@@ -63,9 +65,9 @@ also only selecting a subset of the samples to keep. Will skip comment lines.
       relative directory, and misspellings are all possible reasons.
    }
    \item{
-      \command{Columns must use strings for names.}
+      \command{Columns must use text for names.}
    }{
-      You specified something other than a string when setting the
+      You specified something other than text when setting the
       \code{columns} parameter. Perhaps you need something like \code{"1"}
       instead of \code{1}.
    }
@@ -76,14 +78,15 @@ also only selecting a subset of the samples to keep. Will skip comment lines.
       default. You have to specify both.
    }
    \item{
-      \command{Columns must specify non-empty strings for column names}
+      \command{Columns must specify non-empty text for column names}
    }{
-      Can't specify an empty string as a column heading. What are you trying
+      Can't specify empty text \code{""} as a column heading. What are you trying
       to do? This must be a real column heading from your file that can be
       used to identify the column after being read in.
    }
    \item{
-      \command{May not specify the same column for sample and exonExpressionFile data}
+      \command{May not specify the same column for sample and
+         exonExpressionFile data}
    }{
       Why would you use the same heading for both needed columns? Don't do that.
    }
@@ -101,6 +104,12 @@ also only selecting a subset of the samples to keep. Will skip comment lines.
       for the exon expression data.
    }
    \item{
+      \command{The sample and exon expression file columns must contain text}
+   }{
+      Either or both of these columns was read in as something other than
+      a character vector. Perhaps you mis-identified the column names.
+   }
+   \item{
       \command{The cohort file can not contains duplicate samples}
    }{
       The cohort file contains multiple lines with the same sample name, even
@@ -108,13 +117,23 @@ also only selecting a subset of the samples to keep. Will skip comment lines.
       ok.
    }
    \item{
-      \command{The cohort file can not contain duplicate cohort expression files}
+      \command{The cohort file can not contain duplicate cohort expression
+         files}
    }{
       The cohort file contains multiple lines with the same cohort expression
       file name, even after filtering out any samples you didn't want
       considered. That's not ok. If two different samples really have the
       same expression file name, you'll have to put them in different
       directories.
+   }
+   \item{
+      \command{All sample and exon expression file entries must be non-empty
+         text}
+   }{
+      Can not have missing or empty text for samples as this is the
+      primary key for later work. Can not have missing or empty text for
+      exon expression files (after filtering) as such samples can not then
+      be part of the cohort.
    }
 }
 }
@@ -133,12 +152,20 @@ also only selecting a subset of the samples to keep. Will skip comment lines.
    }
    \item{
       \command{Ignoring missing samples specified in the "samples" parameter
-               list: \var{sample, sample,...}}
+         list: \var{sample, sample,...}}
    }{
       The list of samples you provided to filter the cohort data frame
       contained sample names that were not actually in the cohort file.
       Perhaps you should double check your cohort file?
    }
+}
+}
+
+\section{Todo}{
+
+\itemize{
+   \item{Consider general validator tool with key column and column
+   validation selectable or specifiable. }
 }
 }
 

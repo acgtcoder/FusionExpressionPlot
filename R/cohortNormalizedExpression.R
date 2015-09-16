@@ -3,13 +3,15 @@
 #'
 #' Creates a data frame from a tab-delimited file with a header describing a
 #' sample cohort. The cohort file must specify at minimum the sample and
-#' associated exon expression file. Allows selecting which columns are which and
-#' also only selecting a subset of the samples to keep. Will skip comment lines.
+#' associated exon expression file. Allows selecting which columns are which.
+#' Also allows selecting a subset of the samples to keep. Will skip comment
+#' lines. All columns from the cohort file are loaded, but only the sample and
+#' exonExpressionFile columns are validated.
 #'
 #' @param file The name of the cohort file to read in (tab-delimited with
 #'   header)
 #'
-#' @param samples The list of samples to read in, as a string vector. The rows
+#' @param samples The list of samples to read in, as a character vector. The rows
 #'   matching these are the only ones read in. By default, this is set to
 #'   \code{NULL}, meaning it reads all the samples. If any sample in the
 #'   provided list is not found, a warning will be generated. Must match exactly
@@ -23,16 +25,17 @@
 #' @param dataRoot A directory to prepended to the \code{exonExpressionFile}
 #'   filenames. By default this is \code{NULL} and nothing is prepended. It is
 #'   ok if \code{dataRoot} does not exist at this time as the file locations are
-#'   not verified at this point, but \code{NA} and empty strings \code{""} are
+#'   not verified at this point, but \code{NA} and empty text \code{""} are
 #'   ignored.
 #'
 #' @param comment.char The character starting comment lines, by default
-#'   \code{'#'}. Must be a single character. Any line begining with this
+#'   \code{'#'}. Must be a single character. Any line beginning with this
 #'   character is considered to be a comment line and is ignored. Must be the
 #'   first character in a line (no leading white space is allowed). Set to the
-#'   empty string, \code{""}, to skip comment line filtering.
+#'   empty text, \code{""}, to skip comment line filtering.
 #'
-#' @return A data frame with two columns:
+#' @return A data frame representing the sample cohort with at least two
+#'   columns:
 #'
 #' \tabular{ll}{
 #'    \code{sample}
@@ -53,9 +56,9 @@
 #'       relative directory, and misspellings are all possible reasons.
 #'    }
 #'    \item{
-#'       \command{Columns must use strings for names.}
+#'       \command{Columns must use text for names.}
 #'    }{
-#'       You specified something other than a string when setting the
+#'       You specified something other than text when setting the
 #'       \code{columns} parameter. Perhaps you need something like \code{"1"}
 #'       instead of \code{1}.
 #'    }
@@ -66,14 +69,15 @@
 #'       default. You have to specify both.
 #'    }
 #'    \item{
-#'       \command{Columns must specify non-empty strings for column names}
+#'       \command{Columns must specify non-empty text for column names}
 #'    }{
-#'       Can't specify an empty string as a column heading. What are you trying
+#'       Can't specify empty text \code{""} as a column heading. What are you trying
 #'       to do? This must be a real column heading from your file that can be
 #'       used to identify the column after being read in.
 #'    }
 #'    \item{
-#'       \command{May not specify the same column for sample and exonExpressionFile data}
+#'       \command{May not specify the same column for sample and
+#'          exonExpressionFile data}
 #'    }{
 #'       Why would you use the same heading for both needed columns? Don't do that.
 #'    }
@@ -91,6 +95,12 @@
 #'       for the exon expression data.
 #'    }
 #'    \item{
+#'       \command{The sample and exon expression file columns must contain text}
+#'    }{
+#'       Either or both of these columns was read in as something other than
+#'       a character vector. Perhaps you mis-identified the column names.
+#'    }
+#'    \item{
 #'       \command{The cohort file can not contains duplicate samples}
 #'    }{
 #'       The cohort file contains multiple lines with the same sample name, even
@@ -98,13 +108,23 @@
 #'       ok.
 #'    }
 #'    \item{
-#'       \command{The cohort file can not contain duplicate cohort expression files}
+#'       \command{The cohort file can not contain duplicate cohort expression
+#'          files}
 #'    }{
 #'       The cohort file contains multiple lines with the same cohort expression
 #'       file name, even after filtering out any samples you didn't want
 #'       considered. That's not ok. If two different samples really have the
 #'       same expression file name, you'll have to put them in different
 #'       directories.
+#'    }
+#'    \item{
+#'       \command{All sample and exon expression file entries must be non-empty
+#'          text}
+#'    }{
+#'       Can not have missing or empty text for samples as this is the
+#'       primary key for later work. Can not have missing or empty text for
+#'       exon expression files (after filtering) as such samples can not then
+#'       be part of the cohort.
 #'    }
 #' }
 #'
@@ -121,7 +141,7 @@
 #'    }
 #'    \item{
 #'       \command{Ignoring missing samples specified in the "samples" parameter
-#'                list: \var{sample, sample,...}}
+#'          list: \var{sample, sample,...}}
 #'    }{
 #'       The list of samples you provided to filter the cohort data frame
 #'       contained sample names that were not actually in the cohort file.
@@ -129,6 +149,11 @@
 #'    }
 #'}
 #'
+#' @section Todo:
+#' \itemize{
+#'    \item{Consider general validator tool with key column and column
+#'    validation selectable or specifiable. }
+#' }
 #' @export
 loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
    columns= c("sample", "exonExpressionFile"), dataRoot= NULL ) {
@@ -150,13 +175,13 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
       }
    }
 
-   if (! class(columns) == 'string') {
-      stop ("Columns must use strings for names.")
+   if (! class(columns) == 'character') {
+      stop ("Columns must use text for names.")
    } else if (length(columns) != 2) {
       stop ("Must specify both the sample and exonExpressionColumn headers")
    } else if (nchar(columns[1]) < 1 || nchar(columns[2]) < 1) {
-      stop( "Columns must specify non-empty strings for column names")
-   } else if (columns[1] != columns[2]) {
+      stop( "Columns must specify non-empty text for column names")
+   } else if (columns[1] == columns[2]) {
       stop("May not specify the same column for sample and exonExpressionFile data")
    }
 
@@ -170,6 +195,9 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
    }
    if (! columns[2] %in% cohortHeadings) {
       stop("The cohort file has no exonExpressionFile column", columns[2])
+   }
+   if (class(df[,columns[1]]) != 'character' || class(df[,columns[2]]) != 'character') {
+      stop("The sample and exon expression file columns must contain text")
    }
 
    if (! is.null(samples)) {
@@ -189,7 +217,16 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
    if (anyDuplicated(df[,columns[2]])) {
       stop( "The cohort file can not contain duplicate cohort expression files")
    }
+   if (anyNA(df[,columns[1]]) || any(nchar(df[,columns[1]]) < 1)
+       || anyNA(df[,columns[2]]) || any(nchar(df[,columns[2]]) < 1)) {
+      stop("All sample and exon expression file entries must be non-empty text")
+   }
+
+   if (! is.null(dataRoot)) {
+      df[,columns[2]] <- file.path(dataRoot, df[,columns[2]])
+   }
    return( df );
+
 }
 
 # Loads an exon expression data file column as a data frame
