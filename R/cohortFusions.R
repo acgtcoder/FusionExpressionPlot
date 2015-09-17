@@ -1,15 +1,28 @@
-isDebug = TRUE
 
+#' Select candidate fusions by sample and gene
+#'
+#' Select out the candidate fusions for the given samples as a new data.
+#' For each samples, include any fusion involving either gene. May not care
+#' about a specific sample-gene1-gene2 combo, but that is for something else
+#' to filter.
+#'
+#' @param fusionDF The data frame of fusion data
+#'
+#' @param sample The vector of sample names to filter by
+#'
+#' @param gene1 The vector of gene names to filter by (either end)
+#'
+#' @param gene2 Another vector of gene name to filter by (either end)
+#'
+#' @return The rows from the data frame matching any given sample and where
+#' both fusion gene ends are in the one of the two lists given (in any
+#' combination)
+#'
+#' @export
 getCandidateFusions <- function (
    fusionDF,
    sample, gene1, gene2
 ) {
-   ###
-   #      Select out the candidate fusions for the given samples as a new data.
-   # For each samples, include any fusion involving either gene. May not care
-   # about a specific sample-gene1-gene2 combo, but that is for somwthing else
-   # to filter.
-   ###
    matchSample = fusionDF$sample %in% sample;
    endInG1 = fusionDF$gene1 %in% c(gene1,gene2);
    endInG2 = fusionDF$gene2 %in% c(gene1,gene2);
@@ -19,25 +32,29 @@ getCandidateFusions <- function (
    return(df);
 }
 
+#' Load a mapplice cohort fusion file.
+#'
+#' @param file The path to the data file to load.
+#'
+#' @param all.columns Set TRUE to load all columns from data file. By
+#' default (all.columns=FALSE) only loads and returns some columns (see below).
+#'
+#' @return By default only returns the following columns:
+#'
+#' \tabular{lll}{
+#'    \code{id} \tab was the row number \tab original row number\cr
+#'    \code{gene1} \tab was \code{D_gene} \tab donor side gene\cr
+#'    \code{gene2} \tab was \code{A_gene} \tab acceptor side gene\cr
+#'    \code{gene1pos} \tab was \code{D_end} \tab Last genomic donor side position\cr
+#'    \code{gene2pos} \tab was \code{A_end} \tab First genomic acceptor side position\cr
+#'    \code{sample} \tab was \code{tcga_id} \tab The sample name\cr
+#' }
+#'
+#' If all.columns= TRUE, all of the other columns from the fusion data file
+#' will be kept, with the original names.
+#'
+#' @export
 getMapSpliceCohortFusionData <- function( file, all.columns=FALSE ) {
-   ###
-   # Loads a mapplice cohort fusion file.
-   ###
-   #     PARAM file: path to the data file to load
-   #     PARAM all.columns: Set TRUE to load all columns from data file. By
-   # default (all.columns=FALSE) only loads:
-   #   "D_gene", renamed to "gene1";
-   #   "A_gene", renamed to "gene2";
-   #   "D_end", renamed to "gene1pos";
-   #   "A_start", renamed to "gene2pos";
-   #   "tcga_id", renamed to "sample";
-   # These are renamed regardless of all.columns= setting.
-   ###
-   #      RETURNS: A data frame with the renamed columns, plus rest if
-   # all.columns=TRUE. An "id" column is added at left (row number from
-   # original list)
-
-   ###
    if (! file.exists( file )) {
       stop( "No such file: ", file );
    }
@@ -65,24 +82,38 @@ getMapSpliceCohortFusionData <- function( file, all.columns=FALSE ) {
    return(df)
 }
 
+#' Sub-select fusion lines from a list of fusions
+#'
+#' Filtering is based on sample name or gene. If you need more complex filtering,
+#' just do it yourself. This is a convienience function.
+#'
+#' @param fusions The data frame of fusions to filter
+#'
+#' @param sample List of sample names. If given, only fusions for the
+#' samples with exactly mathcing sample names will be kept. Gene filtering
+#' will select only from these samples.
+#'
+#' @param gene1 List of gene names to filter fusions based on the
+#' upstream gene name.
+#'
+#'  @param gene2 List of gene names to filter fusions based on the
+#' downstream gene name.
+#'
+#'  @param genePairing Logic to use if both gene1 and gene2 given.
+#'    \tabular{ll}{
+#'       \code{"or"} \tab If fusion gene1 in gene1 param or fusion gene2 in
+#'                        gene2 param, keep the fusion.\cr
+#'       \code{"and"} \tab If fusion gene1 in gene1 param and fusion gene2 in
+#'                          gene2 param, keep the fusion.\cr
+#'       \code{"pair"} \tab Keep fusion if param gene1[i] = fusion gene1 and
+#'                            param gene2[i] = fusion gene2, for any gene
+#'                            param i (gene1 and gene2 must be same length)\cr
+#'    }
+#'
+#' @return The selected rows from the fusion data frame
+#'
+#' @export
 filterFusions <- function( fusions, sample=c(), gene1=c(), gene2=c(), genePairing= "or") {
-   ###
-   # Sub-select fusion lines from a list of fusions based on sample name or gene.
-   # If you need more complex filtering,
-   # just do it yourself. This is a convienience function.
-   ###
-   #    PARAM: sample = list of sample names. If given, only fusions for the
-   # samples with exactly mathcing sample names will be kept. Gene filtering
-   # will select only from these samples.
-   #    PARAM: gene1 = list of gene names to filter fusions based on the
-   # upstream gene name.
-   #    PARAM: gene2 = list of gene names to filter fusions based on the
-   # downstream gene name.
-   #    PARAM: genePairing= "or". Logic to use if both gene1 and gene2 given.
-   # "or": If fusion gene1 in gene1 param or fusion gene2 in gene2 param, keep the fusion.
-   # "and": If fusion gene1 in gene1 param and fusion gene2 in gene2 param, keep the fusion.
-   # "pair" Keep fusion if param gene1[i] = fusion gene1 and param gene2[i] =
-   # fusion gene2, for any gene param i (gene1 and gene2 must be same length)
 
    df <- fusions;  # all fusions
    if (length(sample) > 0) {
@@ -153,7 +184,23 @@ filterFusions <- function( fusions, sample=c(), gene1=c(), gene2=c(), genePairin
 #    return (fusions);
 # }
 
+#' Plot a fusion fusion expression plot for every fusion
+#'
+#' @param fusions The fusions to plot
+#'
+#' @param normalizedCohortExpression The normalized exon expression cohort data
+#'   frame.
+#'
+#' @return A list with two entries
+#'
+#' \tabular{ll}{
+#'    \code{plotCount} \tab The number of plots generated.\cr
+#'    \code{fusionLineCount} \tab The number of fusions in the list to plot.\cr
+#' }
+#'
+#' @export
 do.allPlots <- function( fusions, normalizedCohortExpression ) {
+   isDebug = FALSE;
    plotCount = 0;
    fusionLineCount = 0;
    # Iterate through each sample in the fusions data frame
@@ -205,22 +252,27 @@ do.allPlots <- function( fusions, normalizedCohortExpression ) {
    return( list( plotCount= plotCount, fusionLineCount= fusionLineCount ) );
 }
 
+#' Plot the expression of a gene
+#'
+#' For each pair of sample and gene, plot the expression for that gene in that
+#' sample.
+#'
+#' @param samples Vector of sample names giving the expression column from the
+#'   cohortExonExpression to plot. Must be the same length as the gene parameter
+#'
+#' @param genes Vector of gene names giving the exon rows from the
+#'   cohortExonExpression to plot. Must be the same length as the sample
+#'   parameter
+#'
+#' @param cohortExonExpression = cohort expression data frame, with the first 9
+#'   columns giving the gene model with one exon per row, and the remaining
+#'   columns giving exon expression for different samples with their headings
+#'   the sample names.
+#'
+#' @return Nothing
+#'
+#' @export
 plotGeneExpression <- function( samples, genes, cohortExonExpression) {
-   ###
-   #     DESC: For each pair of sample and gene, plot the expression for that
-   # gene in that sample.
-   #     PARAM: samples = vector of sample names giving the expression column
-   # from the cohortExonExpression to plot. Must be the same length as the
-   # gene parameter
-   #     PARAM: genes = vector of gene names giving the exon rows from the
-   # cohortExonExpression to plot. Must be the same length as the sample
-   # parameter
-   #     PARAM: cohortExonExpression = cohort expression data frame, with the
-   # first 9 columns giving the gene model with one exon per row, and the
-   # remaining columns giving exon expression for different samples with their
-   # headings the sample names.
-   #     RETURNS: nothing
-   ###
    if (length(genes) != length(samples)) { stop("Lengths of gene and sample vectors must be the same."); }
 
    for (plotNum in 1:length(samples)) {
@@ -233,6 +285,25 @@ plotGeneExpression <- function( samples, genes, cohortExonExpression) {
    return( NULL );
 }
 
+#' Plot fusion gene expression
+#'
+#' @param fusionsDf The fusions to plot
+#'
+#' @param samples Vector of samples to plot
+#'
+#' @param geneOrderList Vector of genes to plot, in priority order. Genes earlier in list
+#' print on left side when paired with gene later in list.
+#'
+#' @param normalizedCohortExpressionDf The cohort of normalized exon expression results.
+#'
+#' @return A named vector with three components:
+#'    \tabular{ll}{
+#'       \code{plots} \tab Plot count\cr
+#'       \code{fusionPairs} \tab Number of paired genes plotted\cr
+#'       \code{fusionSingles} \tab Number of single genes plotted\cr
+#'    }
+#'
+#' @export
 do.plots <- function( fusionsDf, samples, geneOrderList, normalizedCohortExpressionDf ) {
    plotCount = 0;
    fusionCount = 0;
