@@ -377,15 +377,15 @@ getCohortExonExpressionData <- function ( geneModels, cohortFiles, progress=TRUE
       if (progress) {
          progressMessage = paste(
             c( rowNum, " of ", nrow(cohortFiles),
-               ". Adding exon expression data for ",  cohortFiles[rowNum, "samples"]
+               ". Adding exon expression data for ",  cohortFiles[rowNum, "sample"]
             ), collapse = ""
          );
          print( progressMessage );
       }
       exonExpression <- addExonExpression(
          exonModels= exonExpression,
-         id=   cohortFiles[rowNum, "samples"],
-         path= cohortFiles[rowNum, "exon_expression_files"],
+         id=   cohortFiles[rowNum, "sample"],
+         path= cohortFiles[rowNum, "exonExpressionFile"],
          type= type
       );
    }
