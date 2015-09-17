@@ -229,14 +229,50 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
 
 }
 
-# Loads an exon expression data file column as a data frame
+#' Load a TCGA exon expression data file column as a data frame
+#'
+#' Loads an exon expression data file as generated for the TCGA into a data
+#' frame. Loads the exon identification information but only one of the
+#' expression columns, by default the \code{"rpkm"} column.
+#'
+#' @param path The path to the exon expression data file to load
+#'
+#' @param type The name of the column containing the expression data to be used,
+#'   by default this is \code{"rpkm"}. Allowed values are \code{"rpkm"},
+#'   \code{"count"}, and \code{"coverage"}.
+#'
+#' @return A data frame with the following columns from the exon expression
+#'   file:
+#'
+#' \tabular{ll}{
+#'    \code{chr}    \tab The exon's chromosome\cr
+#'    \code{start}  \tab The genomic start coordinate for the exon\cr
+#'    \code{end}    \tab The genomic end coordinate for the exon\cr
+#'    \code{strand} \tab The strand the chromosome is on, one of \code{+ | - | *}\cr
+#'    \code{rpkm | count | coverage} \tab One of the exon expression level columns\cr
+#' }
+#'
+#' @section Errors:
+#'
+#' The following fatal errors can occur:
+#'
+#' \describe{
+#'    \item{
+#'       \command{No such file: \var{path}}
+#'    }{
+#'       The exon expression file named can not be found. Case, spelling
+#'       permission and wrong working dir for relative paths are all common
+#'       errors.
+#'    }
+#'    \item{
+#'       \command{Only type values allowed are: rpkm, count, coverage}
+#'    }{
+#'       You have to pick one of the expression columns from the file.
+#'    }
+#' }
+#'
+#' @export
 loadExonExpressionFile <- function (path, type= "rpkm" ) {
-   ###
-   # Loads a single exon expression data file.
-   ###
-   #     PARAM path: path to the data file to load
-   #     PARAM type: column from data file to load
-   ###
    if (! file.exists( path )) {
       stop( "No such file: ", path );
    }
@@ -262,19 +298,31 @@ loadExonExpressionFile <- function (path, type= "rpkm" ) {
    return( exonExpression );
 }
 
-# Loads an exon expression data file and appends it to an existing exon
-# expression data frame
+#' Add exon expression file data to an existing data frame
+#'
+#' Adds a column from a single exon data file to gene models data frame or an
+#' exon expression data frame. Can be used to grow a cohort-wide file of
+#' expression data one sample at a time by recursively using the returned data
+#' frame as the input \code{exonModels} file.
+#'
+#' @param exonModels The existing exon models data frame to append to, with or
+#'   without additional columns. The data.frame returned by this function is a
+#'   valid input for this parameter. See also \code{\link{loadCohortDefinition}}
+#'
+#' @param id The name of the column in the data frame after it is appended
+#'
+#' @param path The path to the exon expression data file being added.
+#'
+#' @param type The name of the column in the exon expression data file that is
+#'   extracted and appended. By default this is \code{"rpkm"}
+#'
+#' @return A data frame with one row per exon with the initial columns
+#' describing the exons (as loaded by \code{\link{loadCohortDefinition}}), any
+#' following columns of data, and then the specified column from the given
+#' exon expression data file appended.
+#'
+#' @export
 addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
-   ###
-   # Adds the expression data from a single exon data file to a list of gene
-   # models. Can be used to grow a file of all exon data on sample at a time.
-   ###
-   #     PARAM: exomModels - the exon models data frame to append to
-   #     PARAM: id - the name of the column when appended, must be using
-   # in the data frame
-   #     PARAM: path - the path to the data file to add a column from
-   #     PARAM: type - the name of the data column in the file to add
-   ###
 
    if (id %in% colnames( exonModels )) {
       stop( "column ", id, " already in the models data set" );
@@ -294,19 +342,35 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    return( exonExpression );
 }
 
-# Loads data
+#' Generate a data frame of cohort exon expression data
+#'
+#' Load all the exon expression files for a cohort of samples and build a single
+#' data frame with exon information from a geneModels data frame and one column
+#' of expression information per sample in the cohort. This takes a while, so
+#' progress by sample is reported by default.
+#'
+#' @param geneModels A data frame describing the exon structure of the genes
+#'   (gene models). See \code{\link{loadGafModels}}. This must correspond to the
+#'   exon expression file exon names.
+#'
+#' @param cohortFiles A data frame describing the samples and their exon
+#'   expression files. See \code{\link{loadCohortDefinition}}. All files must
+#'   exist, a simple check is \code{all( file.exists(
+#'   \var{cohortFiles}$exonExpressionFile))}.
+#'
+#' @param progress By default shows a progress bar. Set this to \code{FALSE} if
+#'   don't want this (e.g. if you are logging output when running this in a
+#'   batch job).
+#'
+#' @param type The type of expression being used. This is the name of the column
+#'   from the exon expression files to use. By default uses the column named
+#'   "rpkm". See \code{\link{loadExonExpressionFile}}
+#'
+#' @return Returns a data frame that concatenates the columns from the gene
+#' models data frame with one column from each sample in the cohort data frame.
+#'
+#' @export
 getCohortExonExpressionData <- function ( geneModels, cohortFiles, progress=TRUE, type="rpkm" ) {
-   # Get all the expression files for a cohort of samples and build a single
-   # table. This takes a while, so progress by sample is reported by default.
-   ###
-   #   PARAM: geneModels - the gene models data fram from load gaf models
-   #   PARAM: cohortFiles - the data frame giving samples and data file names
-   #   PARRAM: progress - show a progress bar
-   #   PARAM: type - the name of the column from the files in the cohort to load
-   ###
-   #   Returns a data frame with the gene models + one column per sample in the
-   # cohort Files
-   ###
 
    exonExpression <- geneModels;
    for ( rowNum in 1:nrow(cohortFiles) ) {
@@ -340,7 +404,17 @@ getCohortExonExpressionData <- function ( geneModels, cohortFiles, progress=TRUE
 }
 
 
-# Normalizes data
+#' Normalize a cohort of exon expression data
+#'
+#' @param exonExpressionData A data frame of exon expression data, with one
+#'   column per sample in the cohort. See
+#'   \code{\link{getCohortExonExpressionData}}.
+#'
+#' @return A data frame of exon expression data, but with the data normalized
+#'   (scaled to a standard normal) first within one sample by gene, then across
+#'   all samples by exon.
+#'
+#' @export
 normExpressionData <- function( exonExpressionData ) {
 
    # Data columns are 10+
