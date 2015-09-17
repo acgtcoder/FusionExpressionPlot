@@ -118,9 +118,9 @@ grFromCohortDf <- function( df, genes, sample, column='exonData' ) {
 expressionGrLabelMap <- function( gr ) {
    exonFillColor <- mapColors( gr$relativeExpression,
                                binEnds= c(Inf,0.3,0.1,-0.1,-0.3,-Inf),
-                               brewerPaletteName= 'RdBu', reverse=FALSE
+                               brewerPaletteName= 'RdBu', reverse=TRUE
    )
-   grAddColumn(gr, 'exonFillColor', exonFillColor)
+   gr <- grAddColumn(gr, 'exonFillColor', exonFillColor)
    return(gr)
 }
 
@@ -762,7 +762,10 @@ plot.fusionExpressionPlotData <- function ( data, title, file= 'temp.pdf',
 
 }
 
-plot.fusionExpressionPair <- function( geneName1, geneName2, fusions1, fusions2, sample, cohortExpressionDF ) {
+#' Plot a two-gene fusion expression plot
+#'
+#' @export
+plotFusionExpressionPair <- function( geneName1, geneName2, fusions1, fusions2, sample, cohortExpressionDF ) {
 
    gr1 <- grFromCohortDf(cohortExpressionDF, geneName1, sample, column='relativeExpression')[[geneName1]];
    gr2 <- grFromCohortDf(cohortExpressionDF, geneName2, sample, column='relativeExpression')[[geneName2]];
@@ -784,7 +787,10 @@ plot.fusionExpressionPair <- function( geneName1, geneName2, fusions1, fusions2,
                                   file= paste0( sample, ".", geneName1, ".", geneName2, ".pdf" ) );
 }
 
-plot.fusionExpressionOne <- function( geneName1, fusions1, sample, cohortExpressionDF ) {
+#' Plot a one-gene fusion expression plot
+#'
+#' @export
+plotFusionExpressionOne <- function( geneName1, fusions1, sample, cohortExpressionDF ) {
 
    gr <- grFromCohortDf(cohortExpressionDF, geneName1, sample, column='relativeExpression')[[geneName1]];
 

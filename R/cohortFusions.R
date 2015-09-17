@@ -234,13 +234,13 @@ do.allPlots <- function( fusions, normalizedCohortExpression ) {
             # Fu
             if (gene1 == '-') {
                if (isDebug) { print("Plotting one gene (gene2)"); }
-               plot.fusionExpressionOne( gene2, selectedFusions$gene2pos, sample, selectedExpression )
+               plotFusionExpressionOne( gene2, selectedFusions$gene2pos, sample, selectedExpression )
             } else if (gene2 == '-') {
                if (isDebug) { print("Plotting one gene (gene1)"); }
-               plot.fusionExpressionOne( gene1, selectedFusions$gene1pos, sample, selectedExpression )
+               plotFusionExpressionOne( gene1, selectedFusions$gene1pos, sample, selectedExpression )
             } else {
                if (isDebug) { print("Plotting two genes"); }
-               plot.fusionExpressionPair( gene1, gene2,
+               plotFusionExpressionPair( gene1, gene2,
                                           selectedFusions$gene1pos, selectedFusions$gene2pos,
                                           sample, selectedExpression )
             } # end if/else (select how to plot data)
@@ -279,7 +279,7 @@ plotGeneExpression <- function( samples, genes, cohortExonExpression) {
       selectedCols <- c( names(cohortExonExpression)[1:9], samples[plotNum]);
       selectedRows <- c( cohortExonExpression$gene == genes[plotNum]);
       selectedExpression <- cohortExonExpression[selectedRows, selectedCols];
-      plot.fusionExpressionOne( genes[plotNum], NULL, samples[plotNum], selectedExpression )
+      plotFusionExpressionOne( genes[plotNum], NULL, samples[plotNum], selectedExpression )
    }
 
    return( NULL );
@@ -336,7 +336,7 @@ do.plots <- function( fusionsDf, samples, geneOrderList, normalizedCohortExpress
             if (altGene == '-') {
                print("Plot single");
                normalizedSampleGeneExpressionDf <- normalizedSampleExpressionDf[normalizedSampleExpressionDf$gene == geneOfInterest, ];
-               plot.fusionExpressionOne( geneOfInterest, fusionsOfInterest, sample,
+               plotFusionExpressionOne( geneOfInterest, fusionsOfInterest, sample,
                                          normalizedSampleGeneExpressionDf )
                plotCount = plotCount + 1;
                fusionCount = fusionCount + length(fusionsOfInterest);
@@ -350,7 +350,7 @@ do.plots <- function( fusionsDf, samples, geneOrderList, normalizedCohortExpress
                                sampleFusionGeneAltDf[sampleFusionGeneAltDf$gene2 == altGene,"gene2Pos"]);
                print("altFusions:");
                print(altFusions);
-               plot.fusionExpressionPair( geneOfInterest, altGene,
+               plotFusionExpressionPair( geneOfInterest, altGene,
                                           fusionsOfInterest, altFusions, sample,
                                           normalizedSampleGeneExpressionDf )
                plotCount = plotCount + 1;
