@@ -319,7 +319,7 @@ fusion
 Set up to run
 =============
 
-(1) Make working directory and work there.
+(1) Make a working directory.
 
         mkdir /home/srj/Projects/Fusions/Pcpg/FusionExpression
         cd /home/srj/Projects/Fusions/Pcpg/FusionExpression
@@ -343,11 +343,7 @@ Set up to run
         cut -f 1 exonQuantFileList.txt | sort | uniq | wc -l
         wc -l exonQuantFileList.txt
 
-(4) Copy R code files
-
-        cp /home/srj/Projects/Fusions/src/ExonExpressionPlots_0.1/*.R .
-        
-(5) Get list of samples in cohort
+(4) Get list of samples in cohort
 
         cut -f 1 exonQuantFileList.txt > sampleList.txt
 
@@ -356,7 +352,7 @@ Set up to run
         vi exonQuantFileList.txt
             1G
         i
-        samples	exon_expression_files
+        sample	exonExpressionFiles
 
         :wq
         
@@ -367,25 +363,30 @@ Set up to run
 Get gene model
 ==============
 
-1. Link to gaf file
+(1) Link to gaf file
 
         ln -s /datastore/tier1data/nextgenseq/seqware-analysis/GAF/TCGA.hg19.June2011.gaf TCGA.hg19.June2011.gaf
         
-2. In R with this as the working directory
+(2) In R with this as the working directory
 
-    1. Set up names for input, output, and internal files
+    1. Load code
+    
+            library( "ExonExpressionPlot" )
+
+    2. Set up parameters for running
+    
+      One convention used below is to save the results of any computation
+      that takes more than a couple of seconds, or that represents a reasonably
+      independent data object used as a parameter elsewhere. These are saved
+      as .RDS files.
     
             gafFile <- "TCGA.hg19.June2011.gaf"
             gafGeneModelsFile <- "TCGA.hg19.June2011.gaf.geneModels.txt"
-            geneModels.Rdata <- "geneModels.RData"
-            
-    2. Load code to process the gaf
-    
-            source( "gafGeneModels.R" )
-            
+            geneModelsDF.RDS <- "geneModelsDF.RDS"
+   
     3. Extract gene models from the gaf (takes a few seconds)
     
-            gafGeneModelStats <- extractGeneModels( gafFile, outFile=gafGeneModelsFile )
+            gafGeneModelStats <- extractGeneModels( gafFile, outFile= gafGeneModelsFile )
             print(gafGeneModelStats)
                 $gaf
                 [1] "TCGA.hg19.June2011.gaf"
@@ -422,10 +423,10 @@ Get gene model
                 TCGA.hg19.June2011.gaf.geneModels.txt
                    "4e048d450089ee2309dd16c6ce19b898"
                    
-      . Generate the data file of gene models (takes a few seconds)
+      4. Generate the data file of gene models (takes a few seconds)
 
-            geneModels <- loadGeneModels( gafGeneModelsFile )
-            save( geneModels, file=geneModels.Rdata )
+            geneModelsDF <- loadGafModels( gafGeneModelsFile )
+            saveRDS( geneModelsDF, file=geneModelsDF.RDS )
             
 Generate cohort expression data frame
 =====================================
@@ -433,47 +434,42 @@ Generate cohort expression data frame
 1. Setup parameters for running
     
         expressionColumn <- "rpkm"
-        geneModels.Rdata <- "geneModels.RData"
+        geneModelsRDS <- "geneModelsRDS"
         cohortSamplesFile <- "sampleList.txt"
         sampleExpressionFileMap <- "exonQuantFileList.txt"
-        cohortExpression.RData <- "cohortExpression.RData"
+        cohortExpressionRDS <- "cohortExpressionRDS"
         
-2. Load code to process the expression files
+2. Load the gene model data prepared above
 
-        source("cohortNormalizedExpression.R")
-        
-3. Load the gene model data prepared above
+    geneModelsDF <- readRDS( geneModelsDF.RDS )
 
-        load( geneModels.Rdata )
+3. Set up the data formats used for processing gene expression files
 
-4. Set up the data formats used for processing gene expression files
-
-        cohortSamples <- getSampleCohort( cohortSamplesFile )
-            Read 184 items
-        sampleExpressionFiles <- getCohortFiles( sampleExpressionFileMap, cohortSamples )
+        cohortSamples <- slurp( cohortSamplesFile )
+        sampleExpressionFilesDF <- getCohortFiles( sampleExpressionFileMap, cohortSamples )
         
 5. Load data from all cohort expression files, takes about 5 seconds per file
 
-    cohortExpression <- getCohortExonExpressionData( geneModels, sampleExpressionFiles, type=expressionColumn )
+         cohortExpressionDF <- getCohortExonExpressionData( geneModelsDF, sampleExpressionFilesDF, type=expressionColumn )
             [1] "1 of 184. Adding exon expression data for TCGA-P7-A5NY-01A-12R-A35K-07"
             [1] "2 of 184. Adding exon expression data for TCGA-QR-A6H4-01A-11R-A35K-07"
             ...
             [1] "183 of 184. Adding exon expression data for TCGA-WB-A81K-01A-11R-A35L-07"
             [1] "184 of 184. Adding exon expression data for TCGA-S7-A7X0-01A-12R-A35L-07"
-    save( cohortExpression, file=cohortExpression.RData )
+         saveRDS( cohortExpressionDF, file= cohortExpressionDF.RDS )
         
 Normalize
 =========
 
 1. Set up for normalization
 
-        cohortExpression.RData <- "cohortExpression.RData"
-        normalizedCohortExpression.RData <- "normalizedCohortExpression.RData"
+        cohortExpression.RDS <- "cohortExpression.RDS"
+        normalizedCohortExpression.RDS <- "normalizedCohortExpression.RDS"
 
 2. Do normalization (Takes a couple of seconds per sample)
 
         normalizedCohortExpression <- normExpressionData( cohortExpression )
-        save( normalizedCohortExpression, file=normalizedCohortExpression.RData )
+        saveRDS( normalizedCohortExpression, file=normalizedCohortExpression.RDS )
 
 Get Fusions to plot
 ===================
@@ -481,27 +477,27 @@ Get Fusions to plot
     fusionFile <- "pcpg_185_2014-05-18.merged.fusion_gene_profiles.txt"
     cohortSamplesFile <- "sampleList.txt"
     genesOfInterestFile <- "genesList.txt"
-    fusionData.RData <- "fusionData.RData"
-    selectedFusions.RData <- "selectedFusions.RData"
+    fusionData.RDS <- "fusionData.RDS"
+    selectedFusions.RDS <- "selectedFusions.RDS"
     source("cohortFusions.R")
     source("cohortNormalizedExpression.R")
-    fusionData <- getMapSpliceCohortFusionData( fusionFile );
-    save( fusionData, file=fusionData.RData )
+    fusionDF <- getMapSpliceCohortFusionData( fusionFile );
+    saveRDS( fusionData, file=fusionData.RDS )
     cohortSamples <- getSampleCohort( cohortSamplesFile )
         Read 184 items
     genesOfInterest <- getSampleCohort( genesOfInterestFile )
         Read 3 items
     selectedFusions <- filterFusions( fusionData, sample=cohortSamples, gene1=genesOfInterest, gene2=genesOfInterest );
-    save( selectedFusions, file=selectedFusions.RData )
+    saveRDS( selectedFusions, file=selectedFusions.RDS )
 
 Make plots
 ==========
 
-    selectedFusions.RData <- "selectedFusions.RData"
-    normalizedCohortExpression.RData <- "normalizedCohortExpression.RData"
+    selectedFusions.RDS <- "selectedFusions.RDS"
+    normalizedCohortExpression.RDS <- "normalizedCohortExpression.RDS"
     source("cohortFusions.R")
     source("fusionExpressionPlot.R")
-    load( selectedFusions.RData )
-    load( normalizedCohortExpression.RData )
+    selectedFusions <- readRDS( selectedFusions.RDS )
+    normalizedCohortExpression <- readRDS( normalizedCohortExpression.RDS )
     do.allPlots( selectedFusions, normalizedCohortExpression)
 
