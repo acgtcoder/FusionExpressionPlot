@@ -1,7 +1,7 @@
 Package: FusionExpressionPlot
 Type: Package
 Title: Plot Expression Profiles for Fused Genes
-Version: 0.1.1
+Version: 0.1.2
 Date: 2015-06-22
 Authors@R:
    c(
