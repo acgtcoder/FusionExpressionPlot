@@ -10,7 +10,7 @@ vignette: >
 ---
 
 Notes on identifiers
---------------------
+====================
 
 Chromosome names
 
@@ -121,7 +121,7 @@ Overview
 --------
 
 The following data files are needed by this package. Each is described in more
-detail in the following section,
+detail in a following section.
 
 This package was initially designed to run as part of a batch processing
 pipeline. Inputs are based on files rather than variables. [TODO - allow input
@@ -214,7 +214,7 @@ column 4 - RPKM.
     from any given line by reversing this equation for a given RPKM; it is
     constant within a file.
 
-An example file looks like:
+An example file:
 
         chr1:11874-12227:+	0  0.0000000	0
         chr1:12595-12721:+	2	0.3809524	0.185006777804708
@@ -268,11 +268,13 @@ types, additional or independent RNASeq data will be under different providers
 
 The cohort definition file
 --------------------------
+
 This cohort definition file format is one cohort per file, one sample per line, 
 with a header describing the columns. Lines and headers are tab delimited and 
-terminated by newlines. At least one column (normally the first) must be
-"sample", and for use in this package, one columnd must be
-"exon_expression_file". Other columns are ignored.
+terminated by newlines. At least one column (normally the first) must contain 
+the sample names and another the path to the exon expression files for those 
+samples. Usually these columnas are called "sample" and "exonExpressionFile".
+Other columns are ignored.
 
 sample
 
@@ -281,7 +283,7 @@ as a key and possibly a file or directory name. Therefore the strings in this
 column should be unique when considered case in-sensitively and consist of
 only letters, numbers, periods, underscores, and hyphens.
 
-exon_expression_file
+exonExpressionFile
 
 :   The path to the exon expression file associated with this sample. Generally
 this is the full path. [TODO: test local paths] URLs are not supported.
@@ -289,6 +291,7 @@ this is the full path. [TODO: test local paths] URLs are not supported.
 
    An example file looks like:
 
+        sample ExonExpression   
         TCGA-QR-A6H4-01A-11R-A35K-07    /extData/expression/140205_UNC12-SN629_0347_AC38LPACXX_7_TGACCA/bt.exon_quantification.txt
         TCGA-QR-A705-01A-11R-A35K-07    /extData/expression/140205_UNC12-SN629_0347_AC38LPACXX_7_GAGTGG/bt.exon_quantification.txt
 
@@ -309,12 +312,12 @@ fusion
 
 :   The fusion, formatted like:
  
-        <chrLow#>:<posLow><strandLow>~<chrHigh#>:<posHigh><strandHigh>
+         <chrLow#>:<posLow><strandLow>~<chrHigh#>:<posHigh><strandHigh>
 
-        <chrLow#> - The chromosome name chr1 to chr22, chrX, chrY, or chrM_rCRS
-        <pos> - The last base of, + strand coordinates.
-        <end> - The highest genomic position of the exon, + strand coordinates.
-        <strand> - The orientation of the exon; the strand it is from (+ or -).
+         <chrLow#> - The chromosome name chr1 to chr22, chrX, chrY, or chrM_rCRS.
+         <pos>     - The last base of, + strand coordinates.
+         <end>     - The highest genomic position of the exon, + strand coordinates.
+         <strand>  - The orientation of the exon; the strand it is from (+ or -).
 
 Set up to run
 =============
@@ -324,7 +327,7 @@ Set up to run
         mkdir /home/srj/Projects/Fusions/Pcpg/FusionExpression
         cd /home/srj/Projects/Fusions/Pcpg/FusionExpression
         
-(2) Getting list of quantification files:
+(2) Getting list of quantification files: [TODO - replace with DCC info...]
 
         psql -U seqware -h swprod.bioinf.unc.edu seqware_meta_db \
              --field-separator $'\t' --no-align --tuples-only
@@ -338,25 +341,21 @@ Set up to run
                       and (u.status != 'skip')" \
               -o exonQuantFileList.txt
         
-(3) Verify no sample listed twice by comparing:
+(3) Verify no sample listed twice:
 
         cut -f 1 exonQuantFileList.txt | sort | uniq | wc -l
         wc -l exonQuantFileList.txt
 
-(4) Get list of samples in cohort
+(4) Get list of samples in cohort and edit to contain only the samples
+    you want plots for.
 
         cut -f 1 exonQuantFileList.txt > sampleList.txt
 
-(6) Add heading to exonQuantFileList.txt
+(6) Add heading to exonQuantFileList.txt (tab separated first line)
 
-        vi exonQuantFileList.txt
-            1G
-        i
         sample	exonExpressionFiles
 
-        :wq
-        
-(7) Create list of genes to plot (genesList.txt) with one gene per line
+(7) Create list of genes to plot (genesList.txt) with one gene per line.
 
 (8) Get Mapsplice cohort fusion list and save locally
 
@@ -375,10 +374,11 @@ Get gene model
 
     2. Set up parameters for running
     
-      One convention used below is to save the results of any computation
-      that takes more than a couple of seconds, or that represents a reasonably
-      independent data object used as a parameter elsewhere. These are saved
-      as .RDS files.
+         One convention used below is to save useful intermediate results as
+         .RDS files. This incudes the results of computations that takes a
+         while and results that are reasonably independent data objects that
+         are used as a parameter elsewhere. These are saved as .RDS files.
+         Another convention is to use variables to hold filenames.
     
             gafFile <- "TCGA.hg19.June2011.gaf"
             gafGeneModelsFile <- "TCGA.hg19.June2011.gaf.geneModels.txt"
@@ -441,14 +441,14 @@ Generate cohort expression data frame
         
 2. Load the gene model data prepared above
 
-    geneModelsDF <- readRDS( geneModelsDF.RDS )
+      geneModelsDF <- readRDS( geneModelsDF.RDS )
 
 3. Set up the data formats used for processing gene expression files
 
         cohortSamples <- slurp( cohortSamplesFile )
         sampleExpressionFilesDF <- getCohortFiles( sampleExpressionFileMap, cohortSamples )
         
-5. Load data from all cohort expression files, takes about 5 seconds per file
+4. Load data from all cohort expression files, takes about 5 seconds per file
 
          cohortExpressionDF <- getCohortExonExpressionData( geneModelsDF, sampleExpressionFilesDF, type=expressionColumn )
             [1] "1 of 184. Adding exon expression data for TCGA-P7-A5NY-01A-12R-A35K-07"
@@ -471,33 +471,56 @@ Normalize
         normalizedCohortExpression <- normExpressionData( cohortExpression )
         saveRDS( normalizedCohortExpression, file=normalizedCohortExpression.RDS )
 
-Get Fusions to plot
-===================
+Select Fusions
+--------------
 
-    fusionFile <- "pcpg_185_2014-05-18.merged.fusion_gene_profiles.txt"
-    cohortSamplesFile <- "sampleList.txt"
-    genesOfInterestFile <- "genesList.txt"
-    fusionData.RDS <- "fusionData.RDS"
-    selectedFusions.RDS <- "selectedFusions.RDS"
-    source("cohortFusions.R")
-    source("cohortNormalizedExpression.R")
-    fusionDF <- getMapSpliceCohortFusionData( fusionFile );
-    saveRDS( fusionData, file=fusionData.RDS )
-    cohortSamples <- getSampleCohort( cohortSamplesFile )
-        Read 184 items
-    genesOfInterest <- getSampleCohort( genesOfInterestFile )
-        Read 3 items
-    selectedFusions <- filterFusions( fusionData, sample=cohortSamples, gene1=genesOfInterest, gene2=genesOfInterest );
-    saveRDS( selectedFusions, file=selectedFusions.RDS )
+1. Set up for fusion selection
+
+        fusionFile <- "pcpg_185_2014-05-18.merged.fusion_gene_profiles.txt"
+        samplesFile <- "sampleList.txt"
+        genesFile <- "genesList.txt"
+        fusionDataDF.RDS <- "fusionDataDF.RDS"
+        selectedFusionsDF.RDS <- "selectedFusionsDF.RDS"
+    
+2. Generate data frame of with all fusions
+
+        fusionDataDF <- getMapSpliceCohortFusionData( fusionFile );
+        saveRDS( fusionDataDF, file=fusionDataDF.RDS )
+
+3. Generate the fusion subset data frame
+
+        samples <- slurp( samplesFile )
+        genesOfInterest <- slurp( genesFile )
+        selectedFusionsDF <- filterFusions( fusionDataDF, sample=samples, gene1=genesOfInterest, gene2=genesOfInterest );
+        saveRDS( selectedFusionsDF, file=selectedFusionsDF.RDS )
 
 Make plots
-==========
+----------
 
-    selectedFusions.RDS <- "selectedFusions.RDS"
-    normalizedCohortExpression.RDS <- "normalizedCohortExpression.RDS"
-    source("cohortFusions.R")
-    source("fusionExpressionPlot.R")
-    selectedFusions <- readRDS( selectedFusions.RDS )
-    normalizedCohortExpression <- readRDS( normalizedCohortExpression.RDS )
-    do.allPlots( selectedFusions, normalizedCohortExpression)
+In the section we will finally generate the plots. This needs two of the data 
+frames generated above: the fusions to plot created in "Select fusions" and the 
+combined exon gene models + normalized exon expression data created in 
+"Normalize".
 
+1. Set up for plotting - Use the data frames if they exist, or if in a different
+   R session load them from the saved RDS files.
+
+        selectedFusionsDF.RDS <- "selectedFusionsDF.RDS"
+        normalizedCohortExpressionDF.RDS <- "normalizedCohortExpressionDF.RDS"
+        selectedFusionsDF <- readRDS( selectedFusionsDF.RDS )
+        normalizedCohortExpressionDF <- readRDS( normalizedCohortExpressionDF.RDS )
+    
+2. Generate the plots
+
+        do.allPlots( selectedFusionsDF, normalizedCohortExpressionDF )
+
+3. That's it. You can quit R without saving the environment if you want because 
+   you have all the important data saved as RDS files. You probably want to move
+   the plots to a directory and zip them up for storage if you generated a
+   bunch:
+   
+4. [Optional] Move the plots to a directory and compress them
+
+      mkdir myPLots
+      mv *.pdf myPlots/
+      tar -czvf myPlots.tgz myPlots/
