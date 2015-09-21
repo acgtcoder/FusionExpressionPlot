@@ -184,19 +184,38 @@ filterFusions <- function( fusions, sample=c(), gene1=c(), gene2=c(), genePairin
 #    return (fusions);
 # }
 
-#' Plot a fusion fusion expression plot for every fusion
+#' Generate fusion expression plots
 #'
-#' @param fusions The fusions to plot
+#' Given the fusions to plot and the normalized expression data assoicated with
+#' those fusions, outputs one fusion expression plot (as a pdf) for each. If
+#' multiple fusions from the same sample involve the same genes, these will be
+#' marked on one shared plot. [TODO - check if different gene order meand same
+#' or different plot]. Separate fusion expression plots are generated whenever
+#' fusions are in different samples, or when either involved gene is different.
 #'
-#' @param normalizedCohortExpression The normalized exon expression cohort data
-#'   frame.
+#' @param fusions A data frame describing the fusions to plot. One plot will be
+#'   generated for each unique sample x fusion gene pair in this data frame. See
+#'   \link{getMapSpliceCohortFusionData} for the expected structure.
 #'
-#' @return A list with two entries
+#' @param normalizedCohortExpression A data frame describing the gene models and
+#'   the normalized exon expression data. See \link{loadCohortDefinition} and
+#'   \link{normExpressionData} for the expected structure. Only the subset of
+#'   the cohort associated with the fusions being plotted is needed, i.e. the
+#'   gene-exon models for the genes involved + the normalized expression data
+#'   columns for those exons for the samples involved. However extra expression
+#'   data is just ignored. It is perfectly fine to provide the whole cohort
+#'   normalized exon expression data frame.
+#'
+#' @return The main output is the pdf files, but returns a list with two summary
+#' stat values:
 #'
 #' \tabular{ll}{
 #'    \code{plotCount} \tab The number of plots generated.\cr
-#'    \code{fusionLineCount} \tab The number of fusions in the list to plot.\cr
+#'    \code{fusionLineCount} \tab The number of fusions in the input list to plot.\cr
 #' }
+#'
+#' Note: these may not be the same number due to multiple fusions merged into
+#' one plot when they involve the same gene pair in the same sample.
 #'
 #' @export
 do.allPlots <- function( fusions, normalizedCohortExpression ) {
@@ -231,7 +250,6 @@ do.allPlots <- function( fusions, normalizedCohortExpression ) {
             selectedExpression = normalizedCohortExpression[expressionRowSelect, expressionColumnNames];
 
             # Plot one gene if either gene1 or gene 2 is "-", otherwise plot pair.
-            # Fu
             if (gene1 == '-') {
                if (isDebug) { print("Plotting one gene (gene2)"); }
                plotFusionExpressionOne( gene2, selectedFusions$gene2pos, sample, selectedExpression )

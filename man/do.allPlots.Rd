@@ -2,25 +2,42 @@
 % Please edit documentation in R/cohortFusions.R
 \name{do.allPlots}
 \alias{do.allPlots}
-\title{Plot a fusion fusion expression plot for every fusion}
+\title{Generate fusion expression plots}
 \usage{
 do.allPlots(fusions, normalizedCohortExpression)
 }
 \arguments{
-\item{fusions}{The fusions to plot}
+\item{fusions}{A data frame describing the fusions to plot. One plot will be
+  generated for each unique sample x fusion gene pair in this data frame. See
+  \link{getMapSpliceCohortFusionData} for the expected structure.}
 
-\item{normalizedCohortExpression}{The normalized exon expression cohort data
-  frame.}
+\item{normalizedCohortExpression}{A data frame describing the gene models and
+  the normalized exon expression data. See \link{loadCohortDefinition} and
+  \link{normExpressionData} for the expected structure. Only the subset of
+  the cohort associated with the fusions being plotted is needed, i.e. the
+  gene-exon models for the genes involved + the normalized expression data
+  columns for those exons for the samples involved. However extra expression
+  data is just ignored. It is perfectly fine to provide the whole cohort
+  normalized exon expression data frame.}
 }
 \value{
-A list with two entries
+The main output is the pdf files, but returns a list with two summary
+stat values:
 
 \tabular{ll}{
    \code{plotCount} \tab The number of plots generated.\cr
-   \code{fusionLineCount} \tab The number of fusions in the list to plot.\cr
+   \code{fusionLineCount} \tab The number of fusions in the input list to plot.\cr
 }
+
+Note: these may not be the same number due to multiple fusions merged into
+one plot when they involve the same gene pair in the same sample.
 }
 \description{
-Plot a fusion fusion expression plot for every fusion
+Given the fusions to plot and the normalized expression data assoicated with
+those fusions, outputs one fusion expression plot (as a pdf) for each. If
+multiple fusions from the same sample involve the same genes, these will be
+marked on one shared plot. [TODO - check if different gene order meand same
+or different plot]. Separate fusion expression plots are generated whenever
+fusions are in different samples, or when either involved gene is different.
 }
 
