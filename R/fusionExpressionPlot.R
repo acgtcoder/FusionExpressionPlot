@@ -460,59 +460,79 @@ demo.grToRect <- function() {
 
 }
 
-# Convert a vector of coordinate points to a data object that can be drawn
-# with polygon to plot a shape at each of those coordinates.
+#' Convert points to polygons
+#'
+#' Converts a vector of coordinate points to a data object that can be drawn
+#' with \code{\link{polygon}}. It calculate the values need to plot the points
+#' as polygons specified by shape. Currently only triangles pointing up and
+#' triangles pointing down can be specified. Each point can be described
+#' separately by passing in a vector for the \code{shapes} parameter. Other than
+#' x and y coordinates of the points to plot and the two scale paramters,
+#' provided values will be wrapped as needed.
+#'
+#' @section Shape scaling:
+#'
+#'   The shape of a pixel is not necessarily square, so a square of 10 x 10
+#'   pixels may not be square but instead rectangular. To make the polygon
+#'   shapes come out symetrical, the relative heights and widths of the pixels
+#'   must be specified. This is the purpose of the \code{scale} and
+#'   \code{resScale} parameters. Two parameters are provided to allow specifying
+#'   the plot scaling ratio and the screen resolution scaling ratio separately.
+#'
+#' @param x The x plot coordinates where the the poly-points should be drawn
+#'
+#' @param y The y plot coordinates where the the poly-points should be drawn
+#'
+#' @param widths The widths in plot coordinates of the poly-points. Default =
+#'   5.
+#'
+#' @param heights The height in plot coordinates of the poly-points. Default =
+#'   5.
+#'
+#' @param sides The position of the poly-points over the coordinate point. Can
+#'   have a value from 1-9, oriented like a 3 x 3 touch pad, 1 has uper left
+#'   corner of poly as the point, 5 has the middle over the point, and 9 has the
+#'   lower right as the point. Default = 5, centered.
+#'
+#' @param shapes The shape of the poly-point. Allowed shapes are
+#'   \code{'triangleDown'} (the default) and \code{'triangleUp'}.
+#'
+#' @param fillColors The colors filling the poly-point. Default = \code{'red'}.
+#'
+#' @param borderColors The colors of the poly-point borders. Default =
+#'   \code{'black'}.
+#'
+#' @param scale The scale factor of the x and y axis of the plot, i.e if plot
+#'   is 100x500, scale should be \code{c(1,5)} or \code{c(0.2,1)}. By default
+#'   this is \code{c(1,1)}.
+#'
+#' @param resScale The scale factor of the device, i.e. if the screen
+#'   resolution is 1024x768, this should be \code{c(1,1024/768)} or
+#'   \code{c(768/1024,1)}. By default this is \code{c(1,1)}.
+#'
+#' @return Returns a list with the data needed to plot the points as polygons.
+#'   The elements of the list are:
+#'
+#' \tabular{ll}{
+#'    \code{count} \tab number of points plotted as polygons\cr
+#'    \code{xRadii} \tab 1/2 widths of points, after wrapping\cr
+#'    \code{yRadii} \tab 1/2 heights of points, after wrapping\cr
+#'    \code{shapes} \tab The shapes parameter, after wrapping\cr
+#'    \code{sides} \tab The sides parameter, after wrapping\cr
+#'    \code{fillColors} \tab The fillColors parameter, after wrapping\cr
+#'    \code{borderColors} \tab The borderColors parameter, after wrapping\cr
+#'    \code{x} \tab X coordinates of polygons to draw, \code{NA} separated\cr
+#'    \code{y} \tab Y coordinates of polygons to draw, \code{NA} separated\cr
+#'    \code{xRange} \tab lowest and highest x value drawn\cr
+#'    \code{yRange} \tab lowest and highest y values drawn\cr
+#' }
+#'
+#' @export
 pointToPoly <- function (
    x, y, widths=20, heights=20, shapes= 'triangleDown', sides= 5,
    fillColors='red', borderColors='black',
    scale=c(4,1), resScale=c(1,1)
 ) {
-
-   ###
-   #     Calculate the values need to plot a sequence of points as polygons
-   # specified by shape. Currently only triangles pointing up and triangles
-   # pointing down can be specified. Each point can be described separately by
-   # passing in a vector for the defining parameter. Other than x and y
-   # coordinates of the points to plot and the two scale paramters, provided
-   # values will be wrapped as needed. The returned x and y coordinates are
-   # in block separated by NA values, which will be ploted by the "polygon"
-   # command as separated polygons.
-   #     The scale and resScale values affect only the shape and size of the
-   # polygons. It does not affect the base positions drawn at. i.e. They allows
-   # for symetrical triangles to be drawn symetrically on graphs with different
-   # x and y scales, and with different device resolutions. Conceptually this
-   # could be handled by pre-scaling the widths and heights, but it is easier to
-   # separate this out.
-   #     PARAM: x - The x position in plot coordinates of the poly-points
-   #     PARAM: y - The y position in plot coordinates of the poly-points
-   #     PARAM: widths= 5 - The widths in plot coordinates of the poly-points
-   #     PARAM: heights= 5 - The height in plot coordinates of the poly-points
-   #     PARAM: sides= 5 - The position of the (larger) poly over the point. Can
-   # have a value from 1-9, oriented like a touch pad, 1 has uper left corner
-   # of poly as the point, 5 has the middle over the point, and 9 has the
-   # lower right as the point.
-   #     PARAM: shapes= 'triangleDown' - Shape of 'polygons'point'. Allowed
-   # shapes are triangleDown and triangleUp.
-   #     PARAM: fillColors= 'red' - Color filling the 'point'.
-   #     PARAM: borderColors= 'black' - Color of the 'point' borders.
-   #     PARAM: scale= c(1,1) - The scale factor of the x and y axis of the
-   # plot, i.e if plot is 100x500, scale should be c(1,5) or c(0.2,1)
-   #     PARAM: resScale= c(1,1) -The scale of the device, i.e. if the screen
-   # resolution is 1024x768, this should be c(1,1024/768) or c(768/1024,1).
-   ###
-   #     RETURNS: List with data needed to plot points as polygons, with
-   #          $count = number of points plotted as polygons.
-   #          $xRadii = 1/2 widths of points, after wrapping.
-   #          $yRadii = 1/2 heights of points, after wrapping.
-   #          $shapes = The shapes parameter, after wrapping.
-   #          $sides = The sides parameter, after wrapping.
-   #          $fillColors = The fillColors parameter, after wrapping.
-   #          $borderColors = The borderColors parameter, after wrapping.
-   #          $x = X coordinates of polygons to draw, NA separated
-   #          $y = Y coordinates of polygons to draw, NA separated
-   #          $xRange = lowest and highest x value drawn
-   #          $yRange = lowest and highest y values drawn
-   ###
    if (length(x) != length(y)) {
       stop( "x and y lengths differ" );
    }
@@ -622,9 +642,46 @@ demo.pointToPoly <- function() {
 # Plotting
 ###
 
-# Merge data from multiple genes and multiple point sets into a data structure
-# for plotting as a fusion expression graph. Uses the gene to exon rect data
-# function above
+#' Generate the plot data object for a fusion expression plot.
+#'
+#' Merge data from multiple genes and multiple point sets into a list for
+#' plotting as a fusion expression graph. Uses \code{\link{grToRect}} and
+#' \code{\link{pointToPoly}}. This is a lower-level function called by
+#' plotting functions like \code{\link{plotFusionExpressionOne}} or
+#' \code{\link{plotFusionExpressionPair}}
+#'
+#' @seealso \code{\link{grToRect}}, \code{\link{pointToPoly}},
+#' \code{\link{plotFusionExpressionOne}}, \code{\link{plotFusionExpressionPair}}
+#' \code{\link{plotFusionExpressionPlotData}}
+#'
+#' @param genes List of genomic ranges objects to plot, by gene name.
+#'
+#' @param fusions List of vectors of genomic fusion points to plot, by gene
+#'   name.
+#'
+#' @param geneNames Vector of gene names.
+#'
+#' @param geneSep Distance between genes in the plot, in bases. Default = 500.
+#'
+#' @param fusionSep Distance between exon tops and tops of plotted fusion
+#'   points, in bases. Default = 40
+#'
+#' @param nameSep Distance between the plot and the gene name annotation, in
+#'   bases. Default = 20.
+#'
+#' @return A "fusion expression plot data" object, a list with the data needed
+#'   to plot the gene models, expression levels, and fusion points. This list
+#'   has the folowing elements:
+#'
+#' \tabular{ll}{
+#'    geneRects   \tab The coordinates of the rectangles to plot as exons\cr
+#'    fusionPolys \tab The coordinates of the polygons (triangles) used as fusion point markers\cr
+#'    geneNames   \tab The names of the genes being plotted\cr
+#'    xRange      \tab The min and max x values in the plot\cr
+#'    yRange      \tab The min and max y values in the plot\cr
+#' }
+#'
+#' @export
 getFusionExpressionPlotData <- function( genes, fusions, geneNames,
                                          geneSep= 500, fusionSep= 40, nameSep= 20) {
    ###
@@ -724,8 +781,36 @@ demo.getFusionExpressionPlotData1 <- function() {
 }
 
 
-# Given the data from a merged fusion plot, plot it.
-plot.fusionExpressionPlotData <- function ( data, title, file= 'temp.pdf',
+#' Plot a fusionExpressionPlotData object
+#'
+#' Plots the data object generated by \code{\link{getFusionExpressionPlotData}}
+#' and saves it as a pdf file. This is a lower-level function called by plotting
+#' functions like \code{\link{plotFusionExpressionOne}} or
+#' \code{\link{plotFusionExpressionPair}}
+#'
+#' @param data A data object generated by
+#'   \code{\link{getFusionExpressionPlotData}}.
+#'
+#' @param title The title to put on the graph.
+#'
+#' @param file The filename (pdf) to save the plot as. By default this is
+#'   \code{temp.pdf}
+#'
+#' @param scale The number of "bases" per inch in the plot, default = 1000
+#'
+#' @param ratio The height/width ratio of the plot.
+#'
+#' @param scaleOffset The distance in bases that the scale annotation is set
+#'   below the gene exon graph.
+#'
+#' @return nothing
+#'
+#' @seealso \code{\link{getFusionExpressionPlotData}}
+#'   \code{\link{plotFusionExpressionOne}}
+#'   \code{\link{plotFusionExpressionPair}}
+#'
+#' @export
+plotFusionExpressionPlotData <- function ( data, title, file= 'temp.pdf',
                                             scale=1000, ratio =4, scaleOffset = 15
 ) {
    geneNames <- data$geneNames;
@@ -762,7 +847,39 @@ plot.fusionExpressionPlotData <- function ( data, title, file= 'temp.pdf',
 
 }
 
-#' Plot a two-gene fusion expression plot
+#' Plot a two-gene fusion expression plot.
+#'
+#' This generates one fusion expression plot file showing the expression of two
+#' genes and associated (possibly multiple, possibly none) fusion points between
+#' them. For plotting fusions to non-gene regions or just one gene, see
+#' \code{\link{plotFusionExpressionOne}}. Essentially a wrapper around two
+#' low-level functions: \code{\link{getFusionExpressionPlotData}} which
+#' generates the plotting data given expression and fusion information, and
+#' \code{\link{plotFusionExpressionPlotData}} which handles the actual plot
+#' file creation.
+#'
+#' @param geneName1 The name of the first gene to plot.
+#'
+#' @param fusions1 A vector of genomic fusion ends within the first gene \code{geneName1}
+#'
+#' @param geneName2 The name of the second gene to plot.
+#'
+#' @param fusions2 A vector of genomic fusion ends within the second gene \code{geneName1}
+#'
+#' @param sample The sample name, for the plot and for lookup of expression in
+#'   the \code{cohortExpressionDF}.
+#'
+#' @param cohortExpressionDF Provides the gene models for the specified gene and
+#'   the normalized expression for the specified sample. See
+#'   \code{\link{normExpressionData}} for format.
+#'
+#' @seealso \code{\link{normExpressionData}},
+#'   \code{\link{plotFusionExpressionPlotData}},
+#'   \code{\link{getFusionExpressionPlotData}},
+#'   \code{\link{getCohortExonExpressionData}}
+#'   \code{\link{plotFusionExpressionOne}}
+#'
+#' @return Nothing
 #'
 #' @export
 plotFusionExpressionPair <- function( geneName1, geneName2, fusions1, fusions2, sample, cohortExpressionDF ) {
@@ -783,11 +900,39 @@ plotFusionExpressionPair <- function( geneName1, geneName2, fusions1, fusions2, 
    data <- getFusionExpressionPlotData( genes, fusions, geneNames );
 
 
-   plot.fusionExpressionPlotData( data, title=paste0( sample, " ", geneName1, "~", geneName2 ),
+   plotFusionExpressionPlotData( data, title=paste0( sample, " ", geneName1, "~", geneName2 ),
                                   file= paste0( sample, ".", geneName1, ".", geneName2, ".pdf" ) );
 }
 
-#' Plot a one-gene fusion expression plot
+#' Plot a one-gene fusion expression plot.
+#'
+#' This generates one fusion expression plot file showing the expression of one
+#' gene and associated (possibly multiple, possibly none) fusion points to
+#' non-gene regions For plotting two genes, see
+#' \code{\link{plotFusionExpressionPair}}. Essentially a wrapper around two
+#' low-level functions: \code{\link{getFusionExpressionPlotData}} which
+#' generates the plotting data given expression and fusion information, and
+#' \code{\link{plotFusionExpressionPlotData}} which handles the actual plot
+#' file creation.
+#'
+#' @param geneName1 The name of the gene being plotted.
+#'
+#' @param fusions1 A vector of genomic fusion ends within the \code{geneName1}
+#'
+#' @param sample The sample name, for the plot and for lookup of expression in
+#'   the \code{cohortExpressionDF}.
+#'
+#' @param cohortExpressionDF Provides the gene models for the specified gene and
+#'   the normalized expression for the specified sample. See
+#'   \code{\link{normExpressionData}} for format.
+#'
+#' @seealso \code{\link{normExpressionData}},
+#'   \code{\link{plotFusionExpressionPlotData}},
+#'   \code{\link{getFusionExpressionPlotData}},
+#'   \code{\link{getCohortExonExpressionData}}
+#'   \code{\link{plotFusionExpressionPair}}
+#'
+#' @return Nothing
 #'
 #' @export
 plotFusionExpressionOne <- function( geneName1, fusions1, sample, cohortExpressionDF ) {
@@ -806,29 +951,29 @@ plotFusionExpressionOne <- function( geneName1, fusions1, sample, cohortExpressi
    data <- getFusionExpressionPlotData( genes, fusions, geneName1 );
 
 
-   plot.fusionExpressionPlotData( data, title=paste0( sample, "   ", geneName1 ),
+   plotFusionExpressionPlotData( data, title=paste0( sample, "   ", geneName1 ),
                                   file= paste0( sample, ".", geneName1, ".pdf" ) );
 }
 
 
-demo.plot.fusionExpressionPlotData <- function() {
+demo.plotFusionExpressionPlotData <- function() {
    data <- demo.getFusionExpressionPlotData();
-   plot.fusionExpressionPlotData( data, title="Testing: clown + TMPRSS2", file = 'clown_TMPRSS2.pdf' );
+   plotFusionExpressionPlotData( data, title="Testing: clown + TMPRSS2", file = 'clown_TMPRSS2.pdf' );
 }
 
-demo.plot.fusionExpressionPlotData1 <- function() {
+demo.plotFusionExpressionPlotData1 <- function() {
    data <- demo.getFusionExpressionPlotData1();
-   plot.fusionExpressionPlotData( data, title="TMPRSS2", file = 'TMPRSS2.pdf' );
+   plotFusionExpressionPlotData( data, title="TMPRSS2", file = 'TMPRSS2.pdf' );
 }
 
-demo.plot.fusionExpressionPlotData4 <- function() {
+demo.plotFusionExpressionPlotData4 <- function() {
    data <- demo.getFusionExpressionPlotData4();
-   plot.fusionExpressionPlotData( data, title="clownA TMPRSS2 clownB clownC", file = 'clownA_TMPRSS2_clownB_clownC.pdf' );
+   plotFusionExpressionPlotData( data, title="clownA TMPRSS2 clownB clownC", file = 'clownA_TMPRSS2_clownB_clownC.pdf' );
 }
 
-demo.plot.fusionExpressionPlotData2 <- function() {
+demo.plotFusionExpressionPlotData2 <- function() {
    data <- demo.getFusionExpressionPlotData2();
-   plot.fusionExpressionPlotData( data, title="Testing: TMPRSS2 + TMPRSS2", file = 'TMPRSS2_TMPRSS2.pdf' );
+   plotFusionExpressionPlotData( data, title="Testing: TMPRSS2 + TMPRSS2", file = 'TMPRSS2_TMPRSS2.pdf' );
 }
 
 

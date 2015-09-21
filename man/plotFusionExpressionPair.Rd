@@ -2,12 +2,45 @@
 % Please edit documentation in R/fusionExpressionPlot.R
 \name{plotFusionExpressionPair}
 \alias{plotFusionExpressionPair}
-\title{Plot a two-gene fusion expression plot}
+\title{Plot a two-gene fusion expression plot.}
 \usage{
 plotFusionExpressionPair(geneName1, geneName2, fusions1, fusions2, sample,
   cohortExpressionDF)
 }
+\arguments{
+\item{geneName1}{The name of the first gene to plot.}
+
+\item{geneName2}{The name of the second gene to plot.}
+
+\item{fusions1}{A vector of genomic fusion ends within the first gene \code{geneName1}}
+
+\item{fusions2}{A vector of genomic fusion ends within the second gene \code{geneName1}}
+
+\item{sample}{The sample name, for the plot and for lookup of expression in
+  the \code{cohortExpressionDF}.}
+
+\item{cohortExpressionDF}{Provides the gene models for the specified gene and
+  the normalized expression for the specified sample. See
+  \code{\link{normExpressionData}} for format.}
+}
+\value{
+Nothing
+}
 \description{
-Plot a two-gene fusion expression plot
+This generates one fusion expression plot file showing the expression of two
+genes and associated (possibly multiple, possibly none) fusion points between
+them. For plotting fusions to non-gene regions or just one gene, see
+\code{\link{plotFusionExpressionOne}}. Essentially a wrapper around two
+low-level functions: \code{\link{getFusionExpressionPlotData}} which
+generates the plotting data given expression and fusion information, and
+\code{\link{plotFusionExpressionPlotData}} which handles the actual plot
+file creation.
+}
+\seealso{
+\code{\link{normExpressionData}},
+  \code{\link{plotFusionExpressionPlotData}},
+  \code{\link{getFusionExpressionPlotData}},
+  \code{\link{getCohortExonExpressionData}}
+  \code{\link{plotFusionExpressionOne}}
 }
 
