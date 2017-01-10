@@ -354,3 +354,27 @@ describe( "loadCohortDefinition()", {
    })
 
 })
+
+describe( "loadExonExpressionFile()", {
+
+   describe( "A default run", {
+      it( "returns a data.frame", {
+
+      })
+      it( "returns the correct columns", {
+
+      })
+      it( "returns the correct column contents for column '...'", {
+
+      })
+   })
+
+   describe( "Options", {
+      describe( "file=", {
+
+      })
+      describe( "type=", {
+
+      })
+   })
+})

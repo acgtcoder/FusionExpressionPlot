@@ -3,8 +3,7 @@ Type: Package
 Title: Plot Expression Profiles for Fused Genes
 Version: 0.1.2
 Date: 2015-06-22
-Authors@R:
-   c(
+Authors@R: c(
       person( "Stuart R", "Jefferys",
               email= "srjefferys@gmail.com",
               role= c("cre", "aut")
@@ -14,14 +13,14 @@ Authors@R:
       )
    )
 Description: Plots exons from two genes as boxes scaled by exon size and
-   colored based on expression in a sample. Fusion points between the two genes
-   are represented as triangles at the appropriate position. This allows
-   visualizing the drop in relative expression of the exons that are part of a
-   putative expressed fusion transcript relative to the exons only in the
-   unfused gene transcripts. Normalization is performed across an entire cohort
-   of samples and then again within each gene, so color differences show exons
-   whose expression is unusually variant within the genes against a background
-   of similar samples.
+    colored based on expression in a sample. Fusion points between the two genes
+    are represented as triangles at the appropriate position. This allows
+    visualizing the drop in relative expression of the exons that are part of a
+    putative expressed fusion transcript relative to the exons only in the
+    unfused gene transcripts. Normalization is performed across an entire cohort
+    of samples and then again within each gene, so color differences show exons
+    whose expression is unusually variant within the genes against a background
+    of similar samples.
 License: GPL-3
 LazyData: TRUE
 Imports:
@@ -29,6 +28,8 @@ Imports:
     IRanges,
     GenomicRanges,
     RColorBrewer
-Suggests: knitr,
+Suggests:
+    knitr,
     testthat
 VignetteBuilder: knitr
+RoxygenNote: 5.0.1

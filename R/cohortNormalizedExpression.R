@@ -185,27 +185,26 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
 
 }
 
-#' Load a TCGA exon expression data file column as a data frame
+#' Load a TCGA exon expression data file as a data frame
 #'
-#' Loads an exon expression data file as generated for the TCGA into a data
-#' frame. Loads the exon identification information but only one of the
-#' expression columns, by default the \code{"rpkm"} column.
+#' Loads an RNA exon expression data file as generated for the TCGA into a data
+#' frame. This file has four tab-delimited columns, no header. The first
+#' column in the file describes the exon as <chr>:<start>-<end><strand>, the
+#' next three give count, coverage, and rpkm values. Th
 #'
 #' @param path The path to the exon expression data file to load
-#'
-#' @param type The name of the column containing the expression data to be used,
-#'   by default this is \code{"rpkm"}. Allowed values are \code{"rpkm"},
-#'   \code{"count"}, and \code{"coverage"}.
 #'
 #' @return A data frame with the following columns from the exon expression
 #'   file:
 #'
 #' \tabular{ll}{
-#'    \code{chr}    \tab The exon's chromosome\cr
-#'    \code{start}  \tab The genomic start coordinate for the exon\cr
-#'    \code{end}    \tab The genomic end coordinate for the exon\cr
-#'    \code{strand} \tab The strand the chromosome is on, one of \code{+ | - | *}\cr
-#'    \code{rpkm | count | coverage} \tab One of the exon expression level columns\cr
+#'    \code{chr}      \tab The exon's chromosome\cr
+#'    \code{start}    \tab The genomic start coordinate for the exon\cr
+#'    \code{end}      \tab The genomic end coordinate for the exon\cr
+#'    \code{strand}   \tab The strand the chromosome is on, one of \code{+ | - | *}\cr
+#'    \code{counte}   \tab One of the exon expression level columns\cr
+#'    \code{coverage} \tab One of the exon expression level columns\cr
+#'    \code{rpkm}     \tab One of the exon expression level columns\cr
 #' }
 #'
 #' @section Errors:
@@ -230,12 +229,7 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
 #' @export
 loadExonExpressionFile <- function (path, type= "rpkm" ) {
    if (! file.exists( path )) {
-      stop( "No such file: ", path );
-   }
-
-   okType = c( "rpkm", "count", "coverage" );
-   if (! type %in% okType) {
-      stop( "Only type values allowed are: ", paste(okType, collapse = ", " ));
+      stop( "No such exonExpressionFile: ", path );
    }
 
    columnNamesRead <- c( "exon", "count", "coverage", "rpkm" );
@@ -250,7 +244,6 @@ loadExonExpressionFile <- function (path, type= "rpkm" ) {
       coverage = df$coverage,
       rpkm     = df$rpkm,
       stringsAsFactors= FALSE);
-   exonExpression <- exonExpression[ , c( "chr", "start", "end", "strand", type )];
    return( exonExpression );
 }
 

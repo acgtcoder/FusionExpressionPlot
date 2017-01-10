@@ -42,11 +42,11 @@ Feature locations
     the feature and the given last position is actually the first base of the
     feature.
     
-    Strands may be specified as +, -, *, or left unspecified. A * means the
-    strand unknown. If no strand is specified, a feature is assumed to be either
-    on the + strand or unknwon, as required by the context. If a sequence of
-    bases is explicitly given, this is usually the sequence on the + strand. For
-    features on the - strand, the sequence of that feature is the reverse
+    Strands may be specified as +, -, \*, or left unspecified. A \* means the 
+    strand a unknown. If no strand is specified, a feature is assumed to be
+    either on the + strand or unknwon, as required by the context. If a sequence
+    of bases is explicitly given, this is usually the sequence on the + strand.
+    For features on the - strand, the sequence of that feature is the reverse 
     complement of the specified sequence, unless explicitly stated otherwise.
 
 Fusion locations
@@ -166,6 +166,8 @@ Fusion file
 Gene annotation file V2.1 (gaf)
 -------------------------------
 
+[TODO: Fix out of date Links]
+
 This package only works with version 2 of the gaf, specifically the hg19 version
 from June 2011.  This annotation data was used by UNC-LCCC to generate the
 TCGA RNASeq expression results (V2 - genome alignment based).  No dbSNP
@@ -250,6 +252,8 @@ is somewhat obscure, it is described [TODO][here]. The root for this public data
 
 https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/tumor/
 
+[TODO: Fix out of date Link]
+
 One subdirectory for each disease type is provided, and then within that
 directory, the path to the RNASeq expression data will look like
 
@@ -271,17 +275,16 @@ The cohort definition file
 
 This cohort definition file format is one cohort per file, one sample per line, 
 with a header describing the columns. Lines and headers are tab delimited and 
-terminated by newlines. At least one column (normally the first) must contain 
-the sample names and another the path to the exon expression files for those 
-samples. Usually these columnas are called "sample" and "exonExpressionFile".
-Other columns are ignored.
+terminated by newlines. At least one column, "sample", must contain the sample
+names and another, "exonExpressionFile" the path to the exon expression files
+for those samples. Other columns are ignored.
 
 sample
 
-:   Normally the first column, this column gives the sample name, and will be used
-as a key and possibly a file or directory name. Therefore the strings in this
-column should be unique when considered case in-sensitively and consist of
-only letters, numbers, periods, underscores, and hyphens.
+:   This column gives the sample name, and will be used as a key and possibly a
+file or directory name. Therefore the strings in this column should be unique
+when considered case in-sensitively and consist of only letters, numbers,
+periods, underscores, and hyphens.
 
 exonExpressionFile
 
@@ -312,26 +315,32 @@ fusion
 
 :   The fusion, formatted like:
  
-         <chrLow#>:<posLow><strandLow>~<chrHigh#>:<posHigh><strandHigh>
+         <chrLow>:<posLow><strandLow>~<chrHigh>:<posHigh><strandHigh>
 
-         <chrLow#> - The chromosome name chr1 to chr22, chrX, chrY, or chrM_rCRS.
-         <pos>     - The last base of, + strand coordinates.
-         <end>     - The highest genomic position of the exon, + strand coordinates.
-         <strand>  - The orientation of the exon; the strand it is from (+ or -).
+         <chr*> - A chromosome name; chr1 to chr22, chrX, chrY, or chrM_rCRS.
+         <pos*> - The last base of a fusion end in + strand coordinates.
+         <strand*> - The orientation of an exon; its strand (+,-,*).
+         
+         Low and High provide a canonical order:
+             If chr* are different, the first in order is Low
+             If chr* are the same, then the lower of pos* (+ strand) is Low
+             If chr* and pos* are the same, strandLow is +, then -, then *
 
 Set up to run
 =============
 
-(1) Make a working directory.
+Assumes working on a Linux system
+
+(1) Set up a working project directory.
 
         mkdir /home/srj/Projects/Fusions/Pcpg/FusionExpression
         cd /home/srj/Projects/Fusions/Pcpg/FusionExpression
         
-(2) Getting list of quantification files: [TODO - replace with DCC info...]
+(2) Create the cohort definition file maping samples to quantification files. We have a postgresql database tracking data. [TODO - replace with GDC info...]
 
         psql -U seqware -h swprod.bioinf.unc.edu seqware_meta_db \
-             --field-separator $'\t' --no-align --tuples-only
-             --command \ "select v.sample, v.file_path \
+             --field-separator $'\t' --no-align --tuples-only \
+             --command "select v.sample, v.file_path \
                   from vw_files v, upload u \
                   where u.sample_id = v.sample_id and \
                       v.sample_type = 'PCPG' and \
@@ -370,7 +379,7 @@ Get gene model
 
     1. Load code
     
-            library( "ExonExpressionPlot" )
+            library( "FusionExpressionPlot" )
 
     2. Set up parameters for running
     
@@ -381,7 +390,7 @@ Get gene model
          Another convention is to use variables to hold filenames.
     
             gafFile <- "TCGA.hg19.June2011.gaf"
-            gafGeneModelsFile <- "TCGA.hg19.June2011.gaf.geneModels.txt"
+            gafGeneModelsFile <- "TCGA.hg19.June2011.gaf.geneModels"
             geneModelsDF.RDS <- "geneModelsDF.RDS"
    
     3. Extract gene models from the gaf (takes a few seconds)
@@ -434,10 +443,10 @@ Generate cohort expression data frame
 1. Setup parameters for running
     
         expressionColumn <- "rpkm"
-        geneModelsRDS <- "geneModelsRDS"
+        geneModelsDF.RDS <- "geneModelsDF.RDS"
         cohortSamplesFile <- "sampleList.txt"
         sampleExpressionFileMap <- "exonQuantFileList.txt"
-        cohortExpressionRDS <- "cohortExpressionRDS"
+        cohortExpressionDF.RDS <- "cohortExpressionDF.RDS"
         
 2. Load the gene model data prepared above
 
@@ -446,7 +455,7 @@ Generate cohort expression data frame
 3. Set up the data formats used for processing gene expression files
 
         cohortSamples <- slurp( cohortSamplesFile )
-        sampleExpressionFilesDF <- getCohortFiles( sampleExpressionFileMap, cohortSamples )
+        sampleExpressionFilesDF <- loadCohortDefinition( sampleExpressionFileMap, cohortSamples )
         
 4. Load data from all cohort expression files, takes about 5 seconds per file
 
@@ -463,12 +472,22 @@ Normalize
 
 1. Set up for normalization
 
-        cohortExpression.RDS <- "cohortExpression.RDS"
-        normalizedCohortExpression.RDS <- "normalizedCohortExpression.RDS"
+        cohortExpressionDF.RDS <- "cohortExpressionDF.RDS"
+        normalizedCohortExpressionDF.RDS <- "normalizedCohortExpressionDF.RDS"
 
-2. Do normalization (Takes a couple of seconds per sample)
+2. Remove any extraneous exons
 
-        normalizedCohortExpression <- normExpressionData( cohortExpression )
+        dropRows <- cohortExpressionDF$gene == 'TCF4' & cohortExpressionDF$exon == 10
+        cohortExpressionModDF <- cohortExpressionDF[! dropRows, ]
+        nrow(cohortExpressionDF)
+        #=> [1] 224227
+        nrow(cohortExpressionModDF)
+        #=> [1] 224226
+        saveRDS( cohortExpressionModDF, file= "cohortExpressionModDF.RDS" )
+
+3. Do normalization (Takes a couple of seconds per sample)
+
+        normalizedCohortExpressionDF <- normExpressionData( cohortExpression )
         saveRDS( normalizedCohortExpression, file=normalizedCohortExpression.RDS )
 
 Select Fusions
