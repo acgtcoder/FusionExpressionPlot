@@ -129,39 +129,37 @@ from vectors, lists, or data-frames in addition to file input.]
 
 Gaf 2.1 (TCGA.hg19.June2011.gaf)
 
-:   The gene annotation file (gaf) reference used with the TCGA RNASeq data as
-    uploaded by UNC. Contains descriptions including names and location models
-    for all the genes, transcipts, exons and more. Used as a reference for the
-    exons described in the Exon expression files and to associate gene or
-    transcript names with exon models.
+:   The gene annotation file (gaf) reference used with the TCGA RNASeq data as 
+uploaded by UNC. Contains descriptions including names and location models for
+all the genes, transcipts, exons and more. Used as a reference for the exons
+described in the Exon expression files and to associate gene or transcript names
+with exon models.
 
 Exon expression files (bt.exon_quantification.txt)
   
-:   Each exon expression file describe RNA expression for one sample on a
-    per-exon basis. It is
-    normally downloaded from the TCGA website and is publically available after a
-    short embargo period. It is usally called bt.exon_quantification.txt. The
-    directory it is in is the name of the sample it is associated with.
+:   Each exon expression file describe RNA expression for one sample on a 
+per-exon basis. It is normally downloaded from the TCGA website and is
+publically available after a short embargo period. It is usally called
+bt.exon_quantification.txt. The directory it is in is the name of the sample it
+is associated with.
   
-Cohort definition file
+Sample description file
 
-:   This file lists all samples in the cohort and the path to the exon expression
-    file associated with it.
+:   This file lists samples and their properties. The only required property is
+the path to the exon expression file. Extra properties are ignored
   
 Fusion file
 
-:   This file lists the fusions in the cohort, by sample. Each line represents a 
-    fusion between two positions in the genome in a sample, as indicated by the 
-    most probable alignment of one or more RNASeq reads. Fusions as they appear in
-    RNASeq data do not differ much from a long range splice event, except it can 
-    involve different chromosomes.
-  
-    Each fusion end may match to multiple partners, and each such fusion event is 
-    indicated on a separate line. Multiple RNA fusion parnters may or may not 
-    indicate multiple fusion events. This can be due to heterogeneity in the
-    underlying DNA fusion events in the source sample, but can also be the result
-    of alternate splicing of transcripts whose unprocessed sequence spans a
-    particular DNA fusion.
+:   This file lists the fusions in the cohort, by sample. Each line represents a
+fusion between two positions in the genome in a sample, as indicated by the most
+probable alignment of one or more RNASeq reads. Fusions as they appear in RNASeq
+data do not differ much from a long range splice event, except it can involve 
+different chromosomes.
+
+    Each fusion end may match to multiple partners, and each such fusion event is
+indicated on a separate line. Multiple RNA fusion parnters may or may not 
+indicate multiple fusion events. This can be due to heterogeneity in the 
+underlying DNA fusion events in the source sample, but can also be the result of alternate splicing of transcripts whose unprocessed sequence spans a particular DNA fusion.
 
 Gene annotation file V2.1 (gaf)
 -------------------------------
@@ -270,14 +268,10 @@ filter out ribosomal RNA but includes non-polyA-tailed RNA. For a few cancer
 types, additional or independent RNASeq data will be under different providers
 (not unc.edu)
 
-The cohort definition file
---------------------------
+The sample description file
+----------------------------
 
-This cohort definition file format is one cohort per file, one sample per line, 
-with a header describing the columns. Lines and headers are tab delimited and 
-terminated by newlines. At least one column, "sample", must contain the sample
-names and another, "exonExpressionFile" the path to the exon expression files
-for those samples. Other columns are ignored.
+The sample description file format is one sample per line, with a header describing the columns. Lines and headers are tab delimited and terminated by newlines. At least one column, "sample", must contain the sample names and another, "exonExpressionFile" the path to the exon expression files for those samples. Other columns are ignored.
 
 sample
 
@@ -301,10 +295,7 @@ this is the full path. [TODO: test local paths] URLs are not supported.
 The fusion data file
 --------------------
 
-The fusion data file contains all RNASeq derived fusions for a sample cohort, 
-with one fusion per line and a header line describing the columns. Lines and
-headers are tab delimited and terminated by newlines. The following columns
-must be provided. Other columns are ignored.
+The fusion data file describes the RNASeq derived fusions associated with the samples listed in the sample file. It is formatted with one fusion per line and a header line describing the columns. Fusion lines and the headers are tab delimited and terminated by newlines. The following columns must be provided. Other columns are ignored.
 
 sample
 

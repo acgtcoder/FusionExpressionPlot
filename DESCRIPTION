@@ -24,12 +24,11 @@ Description: Plots exons from two genes as boxes scaled by exon size and
 License: GPL-3
 LazyData: TRUE
 Imports:
-    tools,
-    IRanges,
-    GenomicRanges,
-    RColorBrewer
+    tools, IRanges, GenomicRanges, RColorBrewer
 Suggests:
     knitr,
-    testthat
+    testthat,
+    devtools
+biocViews: IRanges, GenomicRanges, RColorBrewer
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
