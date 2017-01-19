@@ -281,7 +281,6 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    # the growing data frame. Growing frames by column is not slow.
    renamedColumns <- c( "chr", "start", "end", "strand", id)
    colnames( exonExpression ) <- renamedColumns
-   colnames( exonExpression ) <- renameColumns
 
    exonExpression = merge(
       exonModels, exonExpression, by=c( "chr", "start", "end", "strand" ), all.x=TRUE
