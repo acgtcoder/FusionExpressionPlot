@@ -4,7 +4,7 @@
 \alias{loadExonExpressionFile}
 \title{Load a TCGA exon expression data file as a data frame}
 \usage{
-loadExonExpressionFile(path, type = "rpkm")
+loadExonExpressionFile(path)
 }
 \arguments{
 \item{path}{The path to the exon expression data file to load}
@@ -18,16 +18,17 @@ A data frame with the following columns from the exon expression
    \code{start}    \tab The genomic start coordinate for the exon\cr
    \code{end}      \tab The genomic end coordinate for the exon\cr
    \code{strand}   \tab The strand the chromosome is on, one of \code{+ | - | *}\cr
-   \code{counte}   \tab One of the exon expression level columns\cr
+   \code{count}   \tab One of the exon expression level columns\cr
    \code{coverage} \tab One of the exon expression level columns\cr
    \code{rpkm}     \tab One of the exon expression level columns\cr
 }
 }
 \description{
-Loads an RNA exon expression data file as generated for the TCGA into a data
-frame. This file has four tab-delimited columns, no header. The first
-column in the file describes the exon as <chr>:<start>-<end><strand>, the
-next three give count, coverage, and rpkm values. Th
+Loads an RNA exon expression data file as generated for the TCGA, returning
+its contents as a data frame. The input file has four tab-delimited columns,
+no header. The first column in the file describes the exon as
+<chr>:<start>-<end><strand>, the next three give count, coverage, and rpkm
+values.
 }
 \section{Errors}{
 
@@ -41,11 +42,6 @@ The following fatal errors can occur:
       The exon expression file named can not be found. Case, spelling
       permission and wrong working dir for relative paths are all common
       errors.
-   }
-   \item{
-      \command{Only type values allowed are: rpkm, count, coverage}
-   }{
-      You have to pick one of the expression columns from the file.
    }
 }
 }

@@ -1,12 +1,11 @@
 
 #' Read in the cohort definition file
 #'
-#' Creates a data frame from a tab-delimited file with a header describing a
-#' sample cohort. The cohort file must specify at minimum columns named 'sample'
-#' and 'exonExpressionFile'. These names must match case sensitively.
-#' Allows selecting a subset of the samples to keep. Will skip comment
-#' lines. All columns from the cohort file are loaded, but only the sample and
-#' exonExpressionFile columns are validated.
+#' Creates a data frame from the cohort description file. The file read must be
+#' tab-delimited, one line per sample, with header. Lines beginning with a '#'
+#' are ignored. It must include the columns 'sample' and 'exonExpressionFile'
+#' (case sensitive). Allows loading only a subset of the samples. All columns
+#' from the file are loaded.
 #'
 #' @param file The name of the cohort file to read in (tab-delimited with
 #'   header)
@@ -187,10 +186,11 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
 
 #' Load a TCGA exon expression data file as a data frame
 #'
-#' Loads an RNA exon expression data file as generated for the TCGA into a data
-#' frame. This file has four tab-delimited columns, no header. The first
-#' column in the file describes the exon as <chr>:<start>-<end><strand>, the
-#' next three give count, coverage, and rpkm values. Th
+#' Loads an RNA exon expression data file as generated for the TCGA, returning
+#' its contents as a data frame. The input file has four tab-delimited columns,
+#' no header. The first column in the file describes the exon as
+#' <chr>:<start>-<end><strand>, the next three give count, coverage, and rpkm
+#' values.
 #'
 #' @param path The path to the exon expression data file to load
 #'
@@ -202,7 +202,7 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
 #'    \code{start}    \tab The genomic start coordinate for the exon\cr
 #'    \code{end}      \tab The genomic end coordinate for the exon\cr
 #'    \code{strand}   \tab The strand the chromosome is on, one of \code{+ | - | *}\cr
-#'    \code{counte}   \tab One of the exon expression level columns\cr
+#'    \code{count}   \tab One of the exon expression level columns\cr
 #'    \code{coverage} \tab One of the exon expression level columns\cr
 #'    \code{rpkm}     \tab One of the exon expression level columns\cr
 #' }
@@ -219,15 +219,10 @@ loadCohortDefinition <- function ( file, samples=NULL, comment.char= '#',
 #'       permission and wrong working dir for relative paths are all common
 #'       errors.
 #'    }
-#'    \item{
-#'       \command{Only type values allowed are: rpkm, count, coverage}
-#'    }{
-#'       You have to pick one of the expression columns from the file.
-#'    }
 #' }
 #'
 #' @export
-loadExonExpressionFile <- function (path, type= "rpkm" ) {
+loadExonExpressionFile <- function (path) {
    if (! file.exists( path )) {
       stop( "No such exonExpressionFile: ", path );
    }
@@ -276,10 +271,16 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    if (id %in% colnames( exonModels )) {
       stop( "column ", id, " already in the models data set" );
    }
-   # path and type validated in subroutine loadExonExpressionFile()
-   exonExpression <- loadExonExpressionFile( path, type );
 
-   colnames( exonExpression )[ which( colnames( exonExpression ) == type )] = id;
+   # Get a data frame with exon descriptions and only the columns wanted.
+   keepColumns <- c( "chr", "start", "end", "strand", type)
+   # path validated in subroutine loadExonExpressionFile()
+   exonExpression <- loadExonExpressionFile( path )[keepColumns, ];
+
+   # Change the name of the data column to be the sample id, ready to append to
+   # the growing data frame. Growing frames by column is not slow.
+   renamedColumns <- c( "chr", "start", "end", "strand", id)
+   colnames( exonExpression ) <- renameColumns
 
    exonExpression = merge(
       exonModels, exonExpression, by=c( "chr", "start", "end", "strand" ), all.x=TRUE
@@ -287,7 +288,6 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    if (any(is.na(exonExpression[,id]))) {
       warning( "Expression file for ", id, "is missing some exons" );
    }
-
    return( exonExpression );
 }
 
