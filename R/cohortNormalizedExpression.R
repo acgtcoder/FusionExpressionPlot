@@ -268,7 +268,8 @@ loadExonExpressionFile <- function (path) {
 #' @export
 addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
 
-   if (id %in% colnames( exonModels )) {
+   header <- colnames( exonModels )
+   if (id %in% header) {
       stop( "column ", id, " already in the models data set" );
    }
 
@@ -277,14 +278,10 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    # path validated in subroutine loadExonExpressionFile()
    exonExpression <- loadExonExpressionFile( path )[keepColumns, ];
 
-   # Change the name of the data column to be the sample id, ready to append to
-   # the growing data frame. Growing frames by column is not slow.
-   renamedColumns <- c( "chr", "start", "end", "strand", id)
-   colnames( exonExpression ) <- renamedColumns
-
    exonExpression = merge(
       exonModels, exonExpression, by=c( "chr", "start", "end", "strand" ), all.x=TRUE
    );
+   colnames(exonExpression) <- c(header, id)
    if (any(is.na(exonExpression[,id]))) {
       warning( "Expression file for ", id, "is missing some exons" );
    }
