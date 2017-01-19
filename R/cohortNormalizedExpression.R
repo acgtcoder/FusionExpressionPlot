@@ -269,7 +269,7 @@ loadExonExpressionFile <- function (path) {
 addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
 
    header <- colnames( exonModels )
-   message("Incoming Header: ", header)
+   message("Incoming Header: ", paste(header, collapse="," ))
    if (id %in% header) {
       stop( "column ", id, " already in the models data set" );
    }
@@ -277,13 +277,14 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    # Get a data frame with exon descriptions and only the columns wanted.
    keepColumns <- c( "chr", "start", "end", "strand", type)
    # path validated in subroutine loadExonExpressionFile()
-   exonExpression <- loadExonExpressionFile( path )[,keepColumns];
-   message("exonExpression Loaded", exonExpression[1:3,])
+   exonExpression <- loadExonExpressionFile( path )
+   message("exonExpression Loaded: ", exonExpression[1:3,])
 
    exonExpression <- merge(
-      exonModels, exonExpression, by=c( "chr", "start", "end", "strand" ), all.x=TRUE
+      exonModels, exonExpression[keepColumns],
+      by=c( "chr", "start", "end", "strand" ), all.x=TRUE
    )
-   message("exonExpression after merge", exonExpression[1:3,])
+   message("exonExpression after merge: ", exonExpression[1:3,])
 
    colnames(exonExpression) <- c(header, id)
    if (any(is.na(exonExpression[,id]))) {
