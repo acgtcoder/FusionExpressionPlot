@@ -288,7 +288,7 @@ this is the full path. [TODO: test local paths] URLs are not supported.
 
    An example file looks like:
 
-        sample ExonExpression   
+        sample ExonExpressionFile
         TCGA-QR-A6H4-01A-11R-A35K-07    /extData/expression/140205_UNC12-SN629_0347_AC38LPACXX_7_TGACCA/bt.exon_quantification.txt
         TCGA-QR-A705-01A-11R-A35K-07    /extData/expression/140205_UNC12-SN629_0347_AC38LPACXX_7_GAGTGG/bt.exon_quantification.txt
 
@@ -353,7 +353,7 @@ Assumes working on a Linux system
 
 (6) Add heading to exonQuantFileList.txt (tab separated first line)
 
-        sample	exonExpressionFiles
+        sample	exonExpressionFile
 
 (7) Create list of genes to plot (genesList.txt) with one gene per line.
 
@@ -441,7 +441,7 @@ Generate cohort expression data frame
         
 2. Load the gene model data prepared above
 
-      geneModelsDF <- readRDS( geneModelsDF.RDS )
+        geneModelsDF <- readRDS( geneModelsDF.RDS )
 
 3. Set up the data formats used for processing gene expression files
 
