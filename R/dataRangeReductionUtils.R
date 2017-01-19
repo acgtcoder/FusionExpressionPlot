@@ -162,7 +162,7 @@ mapLabels <- function(data, binEnds, binLabels) {
 #' # Display colors in a palette
 #' paletteName <- "RdBu"
 #' levels <- 4
-#' brewer.pal(levels, paletteName)
+#' RColorBrewer::brewer.pal(levels, paletteName)
 #'
 #' ### Using mapColors
 #' x <- c(-100, -1, 0, 1, 100)
@@ -195,7 +195,7 @@ mapColors <- function(
    if (! is.null(colors)) {
       labels <- colors
    } else {
-      labels= brewer.pal( length(binEnds) - 1, brewerPaletteName)
+      labels= RColorBrewer::brewer.pal( length(binEnds) - 1, brewerPaletteName)
    }
 
    if (reverse) {

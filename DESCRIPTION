@@ -29,6 +29,6 @@ Suggests:
     knitr,
     testthat,
     devtools
-biocViews: IRanges, GenomicRanges, RColorBrewer
+biocViews: IRanges, GenomicRanges
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

@@ -92,7 +92,7 @@ display.brewer.all()
 # Display colors in a palette
 paletteName <- "RdBu"
 levels <- 4
-brewer.pal(levels, paletteName)
+RColorBrewer::brewer.pal(levels, paletteName)
 
 ### Using mapColors
 x <- c(-100, -1, 0, 1, 100)

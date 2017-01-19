@@ -65,7 +65,7 @@ describe( 'mapColors()', {
 
       x <- c(-100, -1, 0, 1, 1000)
       binEnds = c(-Inf,-10,10,Inf)
-      colSet <- brewer.pal(3, 'RdBu')
+      colSet <- RColorBrewer::brewer.pal(3, 'RdBu')
 
       it( 'returns correct colors', {
 
@@ -89,7 +89,7 @@ describe( 'mapColors()', {
 
       x <- c(-100, -1, 0, 1, 1000)
       binEnds = c(-Inf,-10,0,10,Inf)
-      colSet <- brewer.pal(4, 'Spectral')
+      colSet <- RColorBrewer::brewer.pal(4, 'Spectral')
 
       it( 'returns correct colors', {
 
