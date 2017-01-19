@@ -356,13 +356,16 @@ describe( "loadCohortDefinition()", {
 })
 
 describe( "loadExonExpressionFile()", {
-
+   exonExpressionFile <- "data/tiny.bt.exon_quantification.txt"
    describe( "A default run", {
+      expect_silent( df <- loadExonExpressionFile( exonExpressionFile ))
       it( "returns a data.frame", {
-
+         expect_is( df, "data.frame" )
       })
       it( "returns the correct columns", {
-
+         wantColumnNames <- c("chr", "start", "end", "strand", "count", "coverage", "rpkm")
+         got <- colnames(df)
+         expect_equal(got, wantColumnNames)
       })
       it( "returns the correct column contents for column '...'", {
 

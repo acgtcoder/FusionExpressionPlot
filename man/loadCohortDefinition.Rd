@@ -42,12 +42,11 @@ A data frame representing the sample cohort with at least two
 }
 }
 \description{
-Creates a data frame from a tab-delimited file with a header describing a
-sample cohort. The cohort file must specify at minimum columns named 'sample'
-and 'exonExpressionFile'. These names must match case sensitively.
-Allows selecting a subset of the samples to keep. Will skip comment
-lines. All columns from the cohort file are loaded, but only the sample and
-exonExpressionFile columns are validated.
+Creates a data frame from the cohort description file. The file read must be
+tab-delimited, one line per sample, with header. Lines beginning with a '#'
+are ignored. It must include the columns 'sample' and 'exonExpressionFile'
+(case sensitive). Allows loading only a subset of the samples. All columns
+from the file are loaded.
 }
 \section{Errors}{
 
