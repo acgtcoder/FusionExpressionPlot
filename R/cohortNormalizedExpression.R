@@ -276,7 +276,7 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    # Get a data frame with exon descriptions and only the columns wanted.
    keepColumns <- c( "chr", "start", "end", "strand", type)
    # path validated in subroutine loadExonExpressionFile()
-   exonExpression <- loadExonExpressionFile( path )[keepColumns, ];
+   exonExpression <- loadExonExpressionFile( path )[,keepColumns];
 
    exonExpression = merge(
       exonModels, exonExpression, by=c( "chr", "start", "end", "strand" ), all.x=TRUE
