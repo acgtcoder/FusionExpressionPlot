@@ -279,7 +279,7 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    keepColumns <- c( "chr", "start", "end", "strand", type)
    # path validated in subroutine loadExonExpressionFile()
    exonExpression <- loadExonExpressionFile( path )[keepColumns]
-   colnames(exonExpression[type]) <- id
+   names(exonExpression)[names(exonExpression) == type] <- id
    message("Read in exonExpression")
    str(exonExpression)
 
