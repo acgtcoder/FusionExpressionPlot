@@ -216,6 +216,7 @@ genomicToModelCoordinates <- function(
    # TODO: Valdate gene
    # Check that gene is GRanges object, single chromosome, single stranded,
    # reduced, and ordered.
+   str(gene)
 
    # No overlaps, sorted.
    gene = reduce(gene);
