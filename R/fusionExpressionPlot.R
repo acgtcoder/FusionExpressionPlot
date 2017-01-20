@@ -216,7 +216,8 @@ genomicToModelCoordinates <- function(
    # TODO: Valdate gene
    # Check that gene is GRanges object, single chromosome, single stranded,
    # reduced, and ordered.
-   str(gene)
+   str(gene)     # DEBUG
+   print(pos)    # DEBUG
 
    # No overlaps, sorted.
    gene = reduce(gene);
@@ -236,6 +237,8 @@ genomicToModelCoordinates <- function(
       p = pos[i]
 
       # Handle point before gene model, or after, if '-' strand model
+      message( "p: ", p)                  # DEBUG
+      message( "eStarts[1]", eStarts[1])  # DEBUG
       if ( p < eStarts[1] ) {
 
          # User is to be notified when position is outside gene model
