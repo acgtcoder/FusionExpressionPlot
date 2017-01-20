@@ -268,7 +268,6 @@ loadExonExpressionFile <- function (path) {
 #' @export
 addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
 
-   header <- colnames( exonModels )
    str(exonModels)
 
    message("Incoming Header: ", paste(header, collapse="," ))
@@ -280,6 +279,7 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    keepColumns <- c( "chr", "start", "end", "strand", type)
    # path validated in subroutine loadExonExpressionFile()
    exonExpression <- loadExonExpressionFile( path )[keepColumns]
+   colnames(exonExpression[type]) <- id
    message("exonExpression Loaded: ", exonExpression[1:3,])
    str(exonExpression)
 
@@ -290,7 +290,6 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    message("exonExpression after merge: ", exonExpression[1:3,])
    str(exonExpression)
 
-   colnames(exonExpression) <- c(header, id)
    if (any(is.na(exonExpression[,id]))) {
       warning( "Expression file for ", id, "is missing some exons" );
    }
