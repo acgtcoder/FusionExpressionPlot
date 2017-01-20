@@ -269,6 +269,8 @@ loadExonExpressionFile <- function (path) {
 addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
 
    header <- colnames( exonModels )
+   str(exonModels)
+
    message("Incoming Header: ", paste(header, collapse="," ))
    if (id %in% header) {
       stop( "column ", id, " already in the models data set" );
@@ -334,6 +336,7 @@ getCohortExonExpressionData <- function ( geneModels, cohortFiles, progress=TRUE
             ), collapse = ""
          );
          print( progressMessage );
+         str(exonExpression)
       }
       exonExpression <- addExonExpression(
          exonModels= exonExpression,
