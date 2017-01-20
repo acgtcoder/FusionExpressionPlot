@@ -279,12 +279,14 @@ addExonExpression <- function( exonModels, id, path, type="rpkm" ) {
    # path validated in subroutine loadExonExpressionFile()
    exonExpression <- loadExonExpressionFile( path )
    message("exonExpression Loaded: ", exonExpression[1:3,])
+   str(exonExpression)
 
    exonExpression <- merge(
       exonModels, exonExpression[keepColumns],
       by=c( "chr", "start", "end", "strand" ), all.x=TRUE
    )
    message("exonExpression after merge: ", exonExpression[1:3,])
+   str(exonExpression)
 
    colnames(exonExpression) <- c(header, id)
    if (any(is.na(exonExpression[,id]))) {
