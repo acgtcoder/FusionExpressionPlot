@@ -232,8 +232,8 @@ loadExonExpressionFile <- function (path) {
    df <- read.delim( path, header=FALSE, col.names=columnNamesRead, colClasses = columnTypesRead, stringsAsFactors=FALSE );
    exonExpression = data.frame(
       chr      = sub( ":.+",     "", df$exon ),
-      start    = sub( "^.+:",    "", sub( "-.+[-+]$", "", df$exon )),
-      end      = sub( ":.+$",    "", sub( "^.+[^:]-", "", df$exon )),
+      start    = as.integer(sub( "^.+:",    "", sub( "-.+[-+]$", "", df$exon ))),
+      end      = as.integer(sub( ":.+$",    "", sub( "^.+[^:]-", "", df$exon ))),
       strand   = sub( "^.+:.+:", "", df$exon ),
       count    = df$count,
       coverage = df$coverage,
